@@ -60,7 +60,10 @@ export default function Home() {
         champion mastery, and match history.
       </p>
 
-      <div className="animate-fade-up flex w-full justify-center" style={{ animationDelay: "240ms" }}>
+      <div
+        className="animate-fade-up relative z-50 flex w-full justify-center"
+        style={{ animationDelay: "240ms" }}
+      >
         <FormInput />
       </div>
 

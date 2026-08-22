@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Poppins, Anton } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -28,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className={`${poppins.variable} ${anton.variable} font-sans antialiased`}>
         <div className="flex min-h-screen flex-col bg-[#F5F2EC] text-stone-800 transition-colors duration-300 dark:bg-night-950 dark:text-gold-300">

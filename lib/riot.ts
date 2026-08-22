@@ -8,8 +8,10 @@ import type {
 } from "./types";
 import { resolveRiotId } from "./regions";
 
-const API_KEY = process.env.RIOT_API_KEY;
+const API_KEY = process.env.RIOT_API_KEY?.trim();
 const CACHE_TTL_MS = 60_000;
+
+const authHeaders = { "X-Riot-Token": API_KEY ?? "" };
 
 interface RiotAccount {
   puuid: string;
@@ -21,6 +23,7 @@ export function friendlyRiotMessage(status: number): string {
   switch (status) {
     case 429:
       return "Riot's servers are busy right now. Wait a minute and try again.";
+    case 401:
     case 403:
       return "The Riot API key is invalid or expired.";
     case 0:
@@ -48,7 +51,7 @@ function toRiotError(err: unknown): RiotApiError {
     const message =
       status === 429
         ? "Riot API rate limit reached. Try again in a moment."
-        : status === 403
+        : status === 401 || status === 403
           ? "The Riot API key is invalid or expired."
           : err.message;
     return new RiotApiError(status, message);
@@ -73,19 +76,23 @@ export async function getSummonerProfile(riotId: string, region?: string): Promi
 
   try {
     const { data: account } = await axios.get<RiotAccount>(
-      `${regionalBase}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}?api_key=${API_KEY}`
+      `${regionalBase}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
+      { headers: authHeaders }
     );
 
     const { data: summoner } = await axios.get<Summoner>(
-      `${platformBase}/lol/summoner/v4/summoners/by-puuid/${account.puuid}?api_key=${API_KEY}`
+      `${platformBase}/lol/summoner/v4/summoners/by-puuid/${account.puuid}`,
+      { headers: authHeaders }
     );
 
     const [masteryRes, leagueRes] = await Promise.all([
       axios.get<ChampionMastery[]>(
-        `${platformBase}/lol/champion-mastery/v4/champion-masteries/by-summoner/${summoner.id}/top?count=6&api_key=${API_KEY}`
+        `${platformBase}/lol/champion-mastery/v4/champion-masteries/by-puuid/${account.puuid}/top?count=6`,
+        { headers: authHeaders }
       ),
       axios.get<LeagueEntry[]>(
-        `${platformBase}/lol/league/v4/entries/by-summoner/${summoner.id}?api_key=${API_KEY}`
+        `${platformBase}/lol/league/v4/entries/by-puuid/${account.puuid}`,
+        { headers: authHeaders }
       ),
     ]);
 
@@ -124,14 +131,15 @@ export async function getMatchHistory(puuid: string, region?: string, count = 10
   const regionalBase = `https://${regional}.api.riotgames.com`;
 
   const { data: matchIds } = await axios.get<string[]>(
-    `${regionalBase}/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=${count}&api_key=${API_KEY}`
+    `${regionalBase}/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=${count}`,
+    { headers: authHeaders }
   );
 
   if (matchIds.length === 0) return [];
 
   const matches = await Promise.all(
     matchIds.map((id) =>
-      axios.get<RiotMatch>(`${regionalBase}/lol/match/v5/matches/${id}?api_key=${API_KEY}`)
+      axios.get<RiotMatch>(`${regionalBase}/lol/match/v5/matches/${id}`, { headers: authHeaders })
     )
   );
 
