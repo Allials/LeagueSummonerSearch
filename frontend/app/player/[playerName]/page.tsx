@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import PlayerData from "@/components/PlayerData";
 import { PlayerNotFound } from "@/components/PlayerNotFound";
-import { getSummonerProfile, getMatchHistory, RiotApiError, friendlyRiotMessage } from "@/lib/riot";
+import {
+  getSummonerProfile,
+  getSummonerProfileByPuuid,
+  getMatchHistory,
+  RiotApiError,
+  friendlyRiotMessage,
+} from "@/lib/riot";
 
 export const dynamic = "force-dynamic";
 
 interface PlayerPageProps {
   params: Promise<{ playerName: string }>;
-  searchParams: Promise<{ region?: string }>;
+  searchParams: Promise<{ region?: string; puuid?: string }>;
 }
 
 function decodeParam(value: string): string {
@@ -26,11 +32,17 @@ export async function generateMetadata({ params }: PlayerPageProps): Promise<Met
 export default async function PlayerPage({ params, searchParams }: PlayerPageProps) {
   const { playerName: encodedName } = await params;
   const playerName = decodeParam(encodedName);
-  const { region } = await searchParams;
+  const { region, puuid } = await searchParams;
 
   let profile;
   try {
-    profile = await getSummonerProfile(playerName, region);
+    if (puuid) {
+      // Match-detail navigation: resolve the teammate directly on this
+      // profile's region by puuid — no tagline needed.
+      profile = await getSummonerProfileByPuuid(puuid, region, playerName);
+    } else {
+      profile = await getSummonerProfile(playerName, region);
+    }
   } catch (error) {
     if (error instanceof RiotApiError && error.status === 404) {
       return <PlayerNotFound query={playerName} />;

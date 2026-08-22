@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Poppins, Anton } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -18,18 +19,28 @@ const anton = Anton({
 });
 
 export const metadata: Metadata = {
-  title: "Kit",
+  title: "Kit.GG - League of Legends Account <Search></Search>",
   description:
     "Search League of Legends accounts for ranked stats, champion mastery, and more.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+        />
       </head>
-      <body className={`${poppins.variable} ${anton.variable} font-sans antialiased`}>
+      <body
+        className={`${poppins.variable} ${anton.variable} font-sans antialiased`}
+      >
         <div className="flex min-h-screen flex-col bg-[#F5F2EC] text-stone-800 transition-colors duration-300 dark:bg-night-950 dark:text-gold-300">
           <div
             aria-hidden

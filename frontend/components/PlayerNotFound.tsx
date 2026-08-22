@@ -3,7 +3,7 @@ import Link from "next/link";
 export function PlayerNotFound({ query }: { query: string }) {
   return (
     <div className="animate-fade-up flex flex-col items-center px-4 pt-14 text-center">
-      <h1 className="font-display text-5xl leading-none text-stone-900 dark:text-gold-300 md:text-7xl">
+      <h1 className="font-display text-5xl leading-none tracking-[-0.01em] text-stone-900 dark:text-gold-300 md:text-7xl">
         Summoner not found
       </h1>
       <p className="mt-3 max-w-md text-sm leading-relaxed text-stone-500 dark:text-stone-400">

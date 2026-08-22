@@ -6,6 +6,7 @@ import Link from "next/link";
 import { IoChevronDown, IoStar } from "react-icons/io5";
 import type { MatchSummary, MatchParticipant } from "@/lib/types";
 import { DEFAULT_REGION, type RegionKey } from "@/lib/regions";
+import { ICON_BLUR } from "@/lib/ddragon";
 import { shortDate, formatDuration, gameModeName, kFormat } from "@/lib/format";
 
 const DD_BASE = "https://ddragon.leagueoflegends.com";
@@ -34,15 +35,11 @@ const itemUrl = (ddVersion: string, itemId: number) =>
   `${DD_BASE}/cdn/${ddVersion}/img/item/${itemId}.png`;
 
 const playerHref = (p: MatchParticipant, regionKey: RegionKey): string | null => {
-  if (!p.riotIdGameName) return null;
-  // Riot match data often omits taglines; scope those links to the profile's
-  // own region so cross-region browsing still resolves.
-  const id = p.riotIdTagLine
-    ? `${p.riotIdGameName}#${p.riotIdTagLine}`
-    : p.riotIdGameName;
-  const qs =
-    !p.riotIdTagLine && regionKey !== DEFAULT_REGION ? `?region=${regionKey}` : "";
-  return `/player/${encodeURIComponent(id)}${qs}`;
+  if (!p.riotIdGameName || !p.puuid) return null;
+  // Teammates resolve by puuid on this profile's region — Riot strips
+  // taglines from match data, so the name alone can't identify them.
+  const regionQs = regionKey !== DEFAULT_REGION ? `&region=${regionKey}` : "";
+  return `/player/${encodeURIComponent(p.riotIdGameName)}?puuid=${p.puuid}${regionQs}`;
 };
 
 const playerLabel = (p: MatchParticipant): string =>
@@ -56,7 +53,15 @@ const playerTitle = (p: MatchParticipant): string | undefined =>
 function ChampIcon({ src, alt, className }: { src: string; alt: string; className: string }) {
   if (!src) return <span className={`shrink-0 rounded-md bg-black/10 dark:bg-white/10 ${className}`} aria-hidden />;
   return (
-    <Image src={src} alt={alt} width={128} height={128} className={`shrink-0 rounded-md ${className}`} />
+    <Image
+      src={src}
+      alt={alt}
+      width={128}
+      height={128}
+      placeholder="blur"
+      blurDataURL={ICON_BLUR}
+      className={`shrink-0 rounded-md ${className}`}
+    />
   );
 }
 
@@ -104,7 +109,7 @@ function ParticipantRow({
       {children}
     </>
   );
-  const cls = "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150";
+  const cls = "participant-row flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150";
   if (href) {
     return (
       <Link href={href} className={`${cls} hover:bg-black/5 dark:hover:bg-white/5`}>
@@ -343,7 +348,9 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
                   key={t.key}
                   type="button"
                   role="tab"
+                  id={`tab-${match.id}-${t.key}`}
                   aria-selected={tab === t.key}
+                  aria-controls={`panel-${match.id}-${t.key}`}
                   onClick={() => setTab(t.key)}
                   className={`relative z-10 w-20 rounded-full py-1.5 text-xs font-semibold transition-colors duration-150 ${
                     tab === t.key
@@ -358,7 +365,12 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
           </div>
 
           {tab === "players" && (
-            <div className="grid gap-4 px-5 pb-4 pt-3 sm:grid-cols-2">
+            <div
+              role="tabpanel"
+              id={`panel-${match.id}-players`}
+              aria-labelledby={`tab-${match.id}-players`}
+              className="grid gap-4 px-5 pb-4 pt-3 sm:grid-cols-2"
+            >
               <TeamColumn
                 title="Blue Side"
                 team={blue}
@@ -398,7 +410,12 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
           )}
 
           {tab === "items" && (
-            <div className="grid gap-4 px-5 pb-4 pt-3 sm:grid-cols-2">
+            <div
+              role="tabpanel"
+              id={`panel-${match.id}-items`}
+              aria-labelledby={`tab-${match.id}-items`}
+              className="grid gap-4 px-5 pb-4 pt-3 sm:grid-cols-2"
+            >
               <TeamColumn
                 title="Blue Side"
                 team={blue}
@@ -422,6 +439,8 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
                               key={`${itemId}-${i}`}
                               src={itemUrl(ddVersion, itemId)}
                               alt=""
+                              placeholder="blur"
+                              blurDataURL={ICON_BLUR}
                               width={64}
                               height={64}
                               className="h-6 w-6 rounded-md border border-black/10 dark:border-white/10"
@@ -460,6 +479,8 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
                               key={`${itemId}-${i}`}
                               src={itemUrl(ddVersion, itemId)}
                               alt=""
+                              placeholder="blur"
+                              blurDataURL={ICON_BLUR}
                               width={64}
                               height={64}
                               className="h-6 w-6 rounded-md border border-black/10 dark:border-white/10"
@@ -484,7 +505,11 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
           )}
 
           {tab === "gold" && (
-            <div className="space-y-1.5 px-5 pb-4 pt-3">
+            <div
+              role="tabpanel"
+              id={`panel--gold`}
+              aria-labelledby={`tab--gold`}
+              className="space-y-1.5 px-5 pb-4 pt-3">
               {sortedByGold.map((p) => {
                 const pct = Math.max(4, Math.round((p.goldEarned / maxGold) * 100));
                 const teamColor = p.teamId === 100 ? "bg-sky-500/80" : "bg-red-500/80";
@@ -496,7 +521,7 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
                     </span>
                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/10 dark:bg-white/10" aria-hidden>
                       <div
-                        className={`h-full rounded-full ${teamColor} transition-[width] duration-300 ease-out`}
+                        className={`h-full rounded-full ${teamColor}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>

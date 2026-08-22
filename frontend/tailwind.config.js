@@ -2,6 +2,10 @@
 module.exports = {
   content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
   darkMode: "class",
+  future: {
+    // hover: variants only apply on devices that truly support hover
+    hoverOnlyWhenSupported: true,
+  },
   theme: {
     extend: {
       screens: {

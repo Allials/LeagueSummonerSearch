@@ -69,12 +69,12 @@ export const FormInput = () => {
               placeholder={`Summoner name#${REGIONS[region].tag}`}
               aria-label="Summoner name"
               autoComplete="off"
-              className="w-full rounded-xl border border-black/10 bg-white/80 py-3 pl-11 pr-16 text-sm text-stone-900 shadow-sm outline-none transition-all duration-200 placeholder:text-stone-400 focus:border-gold-400 focus:ring-2 focus:ring-gold-400/40 dark:border-white/10 dark:bg-white/5 dark:text-gold-300 dark:placeholder:text-stone-500 dark:focus:border-gold-400 dark:focus:ring-gold-400/30 md:text-base"
+              className="w-full rounded-xl border border-black/10 bg-white/80 py-3 pl-11 pr-16 text-sm text-stone-900 shadow-sm outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-stone-400 focus:border-gold-400 focus:ring-2 focus:ring-gold-400/40 dark:border-white/10 dark:bg-white/5 dark:text-gold-300 dark:placeholder:text-stone-500 dark:focus:border-gold-400 dark:focus:ring-gold-400/30 md:text-base"
             />
             {showTag && (
               <span
                 aria-hidden
-                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-stone-400 dark:text-stone-500 md:text-base"
+                className="ghost-tag pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-stone-400 dark:text-stone-500 md:text-base"
               >
                 #{REGIONS[region].tag}
               </span>

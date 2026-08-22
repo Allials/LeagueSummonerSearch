@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import Image from "next/image";
-import { IoAlertCircle } from "react-icons/io5";
+import { IoAlertCircle, IoGameController, IoStatsChart } from "react-icons/io5";
 import { rankImages } from "./Images";
-import { championMeta, championIconUrl, profileIconUrl, getVersion } from "@/lib/ddragon";
+import { championMeta, championIconUrl, profileIconUrl, getVersion, ICON_BLUR } from "@/lib/ddragon";
 import { DEFAULT_REGION, REGIONS, regionKeyForPlatform } from "@/lib/regions";
 import { shortDate } from "@/lib/format";
 import { MatchRow } from "./MatchRow";
@@ -30,16 +30,17 @@ function MasteryBadge({ level }: { level: number }) {
   );
 }
 
+function rankImageFor(tier?: string) {
+  return (tier && rankImages[tier]) ?? rankImages.Unranked;
+}
+
 function WinRateBar({ wins, losses }: { wins: number; losses: number }) {
   const total = wins + losses;
   const pct = total > 0 ? Math.round((wins / total) * 100) : 0;
   return (
     <div className="w-full">
       <div className="flex h-2 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-        <div
-          className="h-full rounded-l-full bg-gold-400 transition-[width] duration-300 ease-out"
-          style={{ width: `${pct}%` }}
-        />
+        <div className="bar-grow h-full rounded-l-full bg-gold-400" style={{ width: `${pct}%` }} />
         <div className="h-full flex-1 rounded-r-full bg-stone-400/25 dark:bg-stone-500/25" />
       </div>
       <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
@@ -49,15 +50,26 @@ function WinRateBar({ wins, losses }: { wins: number; losses: number }) {
   );
 }
 
-function RankedCard({ title, entry }: { title: string; entry: LeagueEntry | null }) {
-  const src = entry ? rankImages[entry.tier] : rankImages.Unranked;
+function RankedCard({
+  title,
+  entry,
+  delay = 0,
+}: {
+  title: string;
+  entry: LeagueEntry | null;
+  delay?: number;
+}) {
+  const src = rankImageFor(entry?.tier);
   return (
-    <div className="card animate-fade-up flex flex-col items-center px-6 py-8 text-center">
+    <div
+      className="card animate-fade-up flex flex-col items-center px-6 py-8 text-center"
+      style={{ animationDelay: `${delay}ms` }}
+    >
       <h3 className="section-label">{title}</h3>
       <Image
-        src={src ?? rankImages.Unranked}
+        src={src}
         alt={`${entry?.tier ?? "Unranked"} rank emblem`}
-        className="mt-5 w-24 md:w-28"
+        className={`mt-5 w-24 md:w-28 ${entry ? "" : "opacity-50 saturate-50"}`}
       />
       {entry ? (
         <>
@@ -123,9 +135,17 @@ async function MatchesList({
 
   if (matches.length === 0) {
     return (
-      <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
-        No recent matches for this account yet.
-      </p>
+      <div className="card mt-4 flex flex-col items-center px-6 py-10 text-center">
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-black/5 text-xl text-stone-400 dark:bg-white/5 dark:text-stone-500">
+          <IoGameController />
+        </span>
+        <p className="mt-3 text-sm font-semibold text-stone-600 dark:text-stone-300">
+          No recent matches yet
+        </p>
+        <p className="mt-1 max-w-xs text-xs leading-relaxed text-stone-400 dark:text-stone-500">
+          Games this account plays will show up here with full details.
+        </p>
+      </div>
     );
   }
 
@@ -191,7 +211,7 @@ export default async function PlayerData({ summoner, mastery, league, matchesPro
           </span>
         </div>
         <div className="min-w-0">
-          <h1 className="truncate font-display text-4xl leading-none text-stone-900 dark:text-gold-300 md:text-6xl">
+          <h1 className="truncate font-display text-4xl leading-none tracking-[-0.01em] text-stone-900 dark:text-gold-300 md:text-6xl">
             {displayName}
             {displayTag && (
               <span className="ml-3 align-middle text-base font-semibold tracking-wide text-gold-600 dark:text-gold-400 md:text-xl">
@@ -208,8 +228,8 @@ export default async function PlayerData({ summoner, mastery, league, matchesPro
       <section className="mt-12">
         <h2 className="section-label">Ranked</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <RankedCard title="Solo / Duo" entry={solo} />
-          <RankedCard title="Flex" entry={flex} />
+          <RankedCard title="Solo / Duo" entry={solo} delay={0} />
+          <RankedCard title="Flex" entry={flex} delay={60} />
         </div>
       </section>
 
@@ -230,6 +250,8 @@ export default async function PlayerData({ summoner, mastery, league, matchesPro
                     alt={champMeta.name}
                     width={128}
                     height={128}
+                    placeholder="blur"
+                    blurDataURL={ICON_BLUR}
                     className="h-20 w-20 rounded-xl md:h-24 md:w-24"
                   />
                 </div>
@@ -250,9 +272,17 @@ export default async function PlayerData({ summoner, mastery, league, matchesPro
             ))}
           </div>
         ) : (
-          <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
-            No mastery data for this account.
-          </p>
+          <div className="card mt-4 flex flex-col items-center px-6 py-10 text-center">
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-black/5 text-xl text-stone-400 dark:bg-white/5 dark:text-stone-500">
+              <IoStatsChart />
+            </span>
+            <p className="mt-3 text-sm font-semibold text-stone-600 dark:text-stone-300">
+              No mastery data for this account
+            </p>
+            <p className="mt-1 max-w-xs text-xs leading-relaxed text-stone-400 dark:text-stone-500">
+              Play a few games and your top champions will appear here.
+            </p>
+          </div>
         )}
       </section>
 

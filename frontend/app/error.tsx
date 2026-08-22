@@ -14,7 +14,7 @@ export default function Error({
       <span className="grid h-12 w-12 place-items-center rounded-xl bg-gold-400/15 text-2xl text-gold-600 dark:text-gold-400">
         <IoAlertCircle />
       </span>
-      <h1 className="mt-5 font-display text-5xl leading-none text-stone-900 dark:text-gold-300 md:text-7xl">
+      <h1 className="mt-5 font-display text-5xl leading-none tracking-[-0.01em] text-stone-900 dark:text-gold-300 md:text-7xl">
         Something went wrong
       </h1>
       <p className="mt-3 max-w-sm text-sm leading-relaxed text-stone-500 dark:text-stone-400">

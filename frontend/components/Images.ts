@@ -5,6 +5,7 @@ import Bronze from "./imgs/Bronze.png";
 import Silver from "./imgs/Silver.png";
 import Gold from "./imgs/Gold.png";
 import Platinum from "./imgs/Platinum.png";
+import Emerald from "./imgs/Emerald.png";
 import Diamond from "./imgs/Diamond.png";
 import Master from "./imgs/Master.png";
 import Grandmaster from "./imgs/Grandmaster.png";
@@ -24,11 +25,18 @@ export const rankImages: Record<string, StaticImageData> = {
   Silver,
   Gold,
   Platinum,
+  Emerald,
   Diamond,
   Master,
   Grandmaster,
   Challenger,
 };
+
+export function rankImageFor(tier: string | null | undefined): StaticImageData {
+  if (!tier) return Unranked;
+  const normalized = tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase();
+  return rankImages[normalized] ?? Unranked;
+}
 
 export const masteryImages: Record<string, StaticImageData> = {
   Mastery1,

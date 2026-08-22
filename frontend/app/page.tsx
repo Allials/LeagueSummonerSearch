@@ -3,6 +3,7 @@ import logo from "@/components/imgs/logo.png";
 import { rankImages, masteryImages } from "@/components/Images";
 import { FormInput } from "@/components/FormInput";
 import { FeaturedPlayers } from "@/components/FeaturedPlayers";
+import { Reveal } from "@/components/Reveal";
 
 const DD_VERSION = "15.4.1";
 const DD = `https://ddragon.leagueoflegends.com/cdn/${DD_VERSION}/img/champion`;
@@ -37,12 +38,12 @@ export default function Home() {
         src={logo}
         alt="Teemo Logo"
         priority
-        className="animate-fade-up mt-2 h-20 w-20 rounded-2xl shadow-lg shadow-black/20 ring-1 ring-gold-400/40 dark:shadow-black/40 md:h-24 md:w-24"
+        className="animate-fade-up mt-2 h-32 w-32 md:h-36 md:w-36"
         style={{ animationDelay: "60ms" }}
       />
 
       <h1
-        className="animate-fade-up mt-5 font-display text-6xl leading-none text-stone-900 dark:text-gold-300 md:text-8xl"
+        className="animate-fade-up mt-3 font-display text-6xl leading-none tracking-[-0.02em] text-stone-900 dark:text-gold-300 md:text-8xl"
         style={{ animationDelay: "120ms" }}
       >
         Kit
@@ -74,10 +75,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div
-          className="card animate-fade-up mt-4 overflow-hidden"
-          style={{ animationDelay: "120ms" }}
-        >
+        <Reveal className="card mt-4 overflow-hidden">
           <div className="flex items-center gap-3.5 border-b border-black/5 px-5 py-4 dark:border-white/5">
             <div className="relative shrink-0">
               <Image
@@ -191,9 +189,9 @@ export default function Home() {
                   {match.win ? "Victory" : "Defeat"}
                 </p>
               </div>
-            ))}
+             ))}
           </div>
-        </div>
+        </Reveal>
 
         <p className="mt-3 text-center text-xs text-stone-400 dark:text-stone-500">
           Your account looks exactly like this — search your name above.

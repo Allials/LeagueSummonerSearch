@@ -116,7 +116,7 @@ export const RegionSelect = ({ value, onChange, size = "md" }: RegionSelectProps
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-60 origin-top-left animate-panel-in rounded-xl bg-white/95 p-1.5 shadow-xl shadow-black/10 ring-1 ring-black/10 backdrop-blur-md dark:bg-night-900/95 dark:ring-white/10">
+        <div className="glass absolute left-0 top-full z-50 mt-2 w-60 origin-top-left animate-panel-in rounded-xl bg-white/95 p-1.5 shadow-xl shadow-black/10 ring-1 ring-black/10 backdrop-blur-md dark:bg-night-900/95 dark:ring-white/10">
           <p className="section-label px-2 pb-1 pt-1.5">Region</p>
           <ul
             ref={listRef}

@@ -3,6 +3,10 @@ import { championFallback } from "./championFallback";
 const DD_BASE = "https://ddragon.leagueoflegends.com";
 const FALLBACK_VERSION = "14.24.1";
 
+// 8x8 neutral tile used as a blur placeholder for remote Data Dragon icons.
+export const ICON_BLUR =
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc4JyBoZWlnaHQ9JzgnPjxyZWN0IHdpZHRoPSc4JyBoZWlnaHQ9JzgnIGZpbGw9JyNlN2U1ZTQnLz48L3N2Zz4=";
+
 export interface ChampionMeta {
   key: string;
   name: string;

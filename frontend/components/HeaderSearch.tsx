@@ -54,12 +54,12 @@ export const HeaderSearch = () => {
           onChange={(e) => setQuery(e.target.value)}
           placeholder={`Search…#${REGIONS[region].tag}`}
           aria-label="Search summoner"
-          className="w-36 rounded-lg border border-black/10 bg-white/70 py-1.5 pl-8 pr-12 text-sm outline-none transition-all duration-200 placeholder:text-stone-400 focus:w-48 focus:border-gold-400 focus:ring-2 focus:ring-gold-400/40 dark:border-white/10 dark:bg-white/5 dark:placeholder:text-stone-500 dark:focus:border-gold-400 dark:focus:ring-gold-400/30 lg:w-44 lg:focus:w-56"
+          className="w-36 rounded-lg border border-black/10 bg-white/70 py-1.5 pl-8 pr-12 text-sm outline-none transition-[width,border-color,box-shadow] duration-200 ease-out placeholder:text-stone-400 focus:w-48 focus:border-gold-400 focus:ring-2 focus:ring-gold-400/40 dark:border-white/10 dark:bg-white/5 dark:placeholder:text-stone-500 dark:focus:border-gold-400 dark:focus:ring-gold-400/30 lg:w-44 lg:focus:w-56"
         />
         {showTag && (
           <span
             aria-hidden
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-400 dark:text-stone-500"
+            className="ghost-tag pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-stone-400 dark:text-stone-500"
           >
             #{REGIONS[region].tag}
           </span>
