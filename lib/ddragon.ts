@@ -31,8 +31,8 @@ function getChampions(): Promise<Map<number, ChampionMeta> | null> {
         data: Record<string, { key: string; name: string }>;
       };
       const map = new Map<number, ChampionMeta>();
-      for (const entry of Object.values(json.data)) {
-        map.set(Number(entry.key), { key: entry.key, name: entry.name });
+      for (const [key, entry] of Object.entries(json.data)) {
+        map.set(Number(entry.key), { key, name: entry.name });
       }
       return map;
     })().catch(() => null);

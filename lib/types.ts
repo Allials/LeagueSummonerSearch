@@ -9,15 +9,22 @@ export interface Summoner {
 }
 
 export interface ChampionMastery {
+  puuid: string;
   championId: number;
   championLevel: number;
   championPoints: number;
   lastPlayTime: number;
   championPointsSinceLastLevel: number;
   championPointsUntilNextLevel: number;
-  chestGranted: boolean;
+  markRequiredForNextLevel: number;
   tokensEarned: number;
-  summonerId: string;
+  championSeasonMilestone: number;
+  nextSeasonMilestone?: {
+    requireGradeCounts: Record<string, number>;
+    rewardMarks: number;
+    bonus: boolean;
+    totalGamesRequires: number;
+  };
 }
 
 export interface LeagueEntry {
@@ -64,6 +71,7 @@ export interface MatchParticipant {
   assists: number;
   cs: number;
   goldEarned: number;
+  totalDamageDealtToChampions: number;
   items: number[];
   win: boolean;
 }
@@ -77,6 +85,7 @@ export interface MatchSummary {
   kills: number;
   deaths: number;
   assists: number;
+  cs: number;
   gameEndTimestamp: number;
   gameDurationSec: number;
   winningTeamId: number;

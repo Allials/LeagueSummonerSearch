@@ -24,4 +24,4 @@ export const gameModeName = (mode: string): string => {
   }
 };
 
-export const goldK = (gold: number): string => `${(gold / 1000).toFixed(1)}k`;
+export const kFormat = (value: number): string => `${(value / 1000).toFixed(1)}k`;

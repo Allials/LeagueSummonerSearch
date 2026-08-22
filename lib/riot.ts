@@ -16,6 +16,7 @@ import {
 
 const API_KEY = process.env.RIOT_API_KEY?.trim();
 const CACHE_TTL_MS = 60_000;
+const MATCH_CACHE_TTL_MS = 5 * 60_000;
 
 const authHeaders = { "X-Riot-Token": API_KEY ?? "" };
 
@@ -50,6 +51,7 @@ export class RiotApiError extends Error {
 }
 
 const profileCache = new Map<string, { data: SummonerProfile; expiresAt: number }>();
+const matchCache = new Map<string, { data: MatchSummary[]; expiresAt: number }>();
 
 async function riotGet<T>(url: string): Promise<T> {
   let res: Response;
@@ -192,6 +194,7 @@ interface RiotMatchParticipant {
   deaths: number;
   assists: number;
   goldEarned: number;
+  totalDamageDealtToChampions: number;
   totalMinionsKilled: number;
   neutralMinionsKilled: number;
   item0: number;
@@ -219,7 +222,14 @@ export async function getMatchHistory(
   regional?: string,
   count = 10
 ): Promise<MatchSummary[]> {
-  const base = regionalBase(regional ?? REGIONS[DEFAULT_REGION].regional);
+  const cluster = regional ?? REGIONS[DEFAULT_REGION].regional;
+  const base = regionalBase(cluster);
+  const cacheKey = `${puuid}:${cluster}:${count}`;
+
+  const cached = matchCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
 
   const matchIds = await riotGet<string[]>(
     `${base}/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=${count}`
@@ -231,7 +241,7 @@ export async function getMatchHistory(
     matchIds.map((id) => riotGet<RiotMatch>(`${base}/lol/match/v5/matches/${id}`))
   );
 
-  return matches.map(({ info }, i) => {
+  const result = matches.map(({ info }, i) => {
     const me = info.participants.find((p) => p.puuid === puuid);
     const participants = info.participants.map((p) => ({
       teamId: p.teamId,
@@ -245,6 +255,7 @@ export async function getMatchHistory(
       assists: p.assists ?? 0,
       cs: (p.totalMinionsKilled ?? 0) + (p.neutralMinionsKilled ?? 0),
       goldEarned: p.goldEarned ?? 0,
+      totalDamageDealtToChampions: p.totalDamageDealtToChampions ?? 0,
       items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6],
       win: p.win ?? false,
     }));
@@ -258,10 +269,14 @@ export async function getMatchHistory(
       kills: me?.kills ?? 0,
       deaths: me?.deaths ?? 0,
       assists: me?.assists ?? 0,
+      cs: (me?.totalMinionsKilled ?? 0) + (me?.neutralMinionsKilled ?? 0),
       gameEndTimestamp: info.gameEndTimestamp,
       gameDurationSec: info.gameDuration,
       winningTeamId,
       participants,
     };
   });
+
+  matchCache.set(cacheKey, { data: result, expiresAt: Date.now() + MATCH_CACHE_TTL_MS });
+  return result;
 }

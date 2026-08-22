@@ -11,13 +11,22 @@ interface PlayerPageProps {
   searchParams: Promise<{ region?: string }>;
 }
 
+function decodeParam(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 export async function generateMetadata({ params }: PlayerPageProps): Promise<Metadata> {
   const { playerName } = await params;
-  return { title: `${playerName} - Summoner Stats` };
+  return { title: `${decodeParam(playerName)} - Summoner Stats` };
 }
 
 export default async function PlayerPage({ params, searchParams }: PlayerPageProps) {
-  const { playerName } = await params;
+  const { playerName: encodedName } = await params;
+  const playerName = decodeParam(encodedName);
   const { region } = await searchParams;
 
   let profile;

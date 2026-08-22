@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { rankImages, masteryImages } from "./Images";
+import { rankImages } from "./Images";
 import { championMeta, championIconUrl, profileIconUrl, getVersion } from "@/lib/ddragon";
 import { REGIONS } from "@/lib/regions";
 import { shortDate } from "@/lib/format";
@@ -21,14 +21,10 @@ const masteryPoints = (points: number): string => {
 };
 
 function MasteryBadge({ level }: { level: number }) {
-  const src = masteryImages[`Mastery${level}`];
-  if (!src) return null;
   return (
-    <Image
-      src={src}
-      alt={`Champion mastery level ${level}`}
-      className="absolute -bottom-2 -left-2 z-10 h-9 w-9 drop-shadow-md"
-    />
+    <span className="absolute -bottom-2 -left-2 z-10 inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-gold-400 px-2 text-[11px] font-bold leading-none text-night-950 shadow-md ring-2 ring-[#F5F2EC] dark:ring-night-950">
+      {level}
+    </span>
   );
 }
 
@@ -170,11 +166,11 @@ export default async function PlayerData({ summoner, mastery, league, matches, m
                   {masteryPoints(champ.championPoints)}
                 </p>
                 <p className="mt-1 text-[11px] text-stone-400 dark:text-stone-500">
-                  {champ.championLevel >= 7
-                    ? "Mastered"
-                    : champ.tokensEarned > 0
-                      ? `${champ.tokensEarned} token${champ.tokensEarned > 1 ? "s" : ""} toward M${champ.championLevel + 1}`
-                      : `Last played ${shortDate(champ.lastPlayTime)}`}
+                  {champ.nextSeasonMilestone
+                    ? `${Object.entries(champ.nextSeasonMilestone.requireGradeCounts)
+                        .map(([grade, count]) => `${count} ${grade}`)
+                        .join(", ")} from season mark`
+                    : `Last played ${shortDate(champ.lastPlayTime)}`}
                 </p>
               </div>
             ))}

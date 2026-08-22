@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { IoChevronDown, IoStar } from "react-icons/io5";
 import type { MatchSummary, MatchParticipant } from "@/lib/types";
-import { shortDate, formatDuration, gameModeName, goldK } from "@/lib/format";
+import { shortDate, formatDuration, gameModeName, kFormat } from "@/lib/format";
 
 const DD_BASE = "https://ddragon.leagueoflegends.com";
 
@@ -51,33 +51,38 @@ function ParticipantRow({
   champIcon,
   isMvp,
   isSelf,
+  subLine,
   children,
 }: {
   p: MatchParticipant;
   champIcon: string;
   isMvp: boolean;
   isSelf: boolean;
+  subLine?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   const href = playerHref(p);
   const body = (
     <>
       <ChampIcon src={champIcon} alt={p.championName} className="h-8 w-8" />
-      <span className="flex min-w-0 flex-1 items-center gap-1.5">
-        <span className="truncate text-xs font-bold text-stone-900 dark:text-gold-300">
-          {playerLabel(p)}
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="flex items-center gap-1.5">
+          <span className="truncate text-xs font-bold text-stone-900 dark:text-gold-300">
+            {playerLabel(p)}
+          </span>
+          {isSelf && (
+            <span className="shrink-0 rounded-full bg-gold-400/20 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-gold-600 dark:text-gold-400">
+              You
+            </span>
+          )}
+          {isMvp && (
+            <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-gold-400 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-night-950">
+              <IoStar className="h-2.5 w-2.5" />
+              MVP
+            </span>
+          )}
         </span>
-        {isSelf && (
-          <span className="shrink-0 rounded-full bg-gold-400/20 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-gold-600 dark:text-gold-400">
-            You
-          </span>
-        )}
-        {isMvp && (
-          <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-gold-400 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-night-950">
-            <IoStar className="h-2.5 w-2.5" />
-            MVP
-          </span>
-        )}
+        {subLine}
       </span>
       {children}
     </>
@@ -91,6 +96,69 @@ function ParticipantRow({
     );
   }
   return <div className={cls}>{body}</div>;
+}
+
+function DamageBar({ p, maxDamage }: { p: MatchParticipant; maxDamage: number }) {
+  return (
+    <span className="flex items-center gap-2">
+      <span
+        className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-black/10 dark:bg-white/10"
+        aria-hidden
+      >
+        <span
+          className={`block h-full rounded-full ${
+            p.teamId === 100 ? "bg-sky-500/80" : "bg-red-500/80"
+          }`}
+          style={{
+            width: `${Math.max(4, Math.round((p.totalDamageDealtToChampions / Math.max(maxDamage, 1)) * 100))}%`,
+          }}
+        />
+      </span>
+      <span className="shrink-0 text-[10px] font-semibold tabular-nums text-stone-400 dark:text-stone-500">
+        {kFormat(p.totalDamageDealtToChampions)} dmg
+      </span>
+    </span>
+  );
+}
+
+function PlayerStats({ p }: { p: MatchParticipant }) {
+  return (
+    <span className="shrink-0 text-right">
+      <span className="block text-xs font-semibold tabular-nums text-stone-700 dark:text-stone-200">
+        {p.kills}/{p.deaths}/{p.assists}
+      </span>
+      <span className="block text-[11px] tabular-nums text-stone-400 dark:text-stone-500">
+        {p.cs} CS
+      </span>
+    </span>
+  );
+}
+
+function TeamColumn({
+  title,
+  team,
+  gold,
+  won,
+  children,
+}: {
+  title: string;
+  team: MatchParticipant[];
+  gold: number;
+  won: boolean;
+  children: (p: MatchParticipant) => React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="flex items-baseline justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
+        <span>
+          {title}
+          {won && <span className="ml-1.5 text-teal-600 dark:text-teal-400">Win</span>}
+        </span>
+        <span className="tabular-nums">{kFormat(gold)} gold</span>
+      </p>
+      <div className="mt-1.5 space-y-0.5">{team.map((p) => children(p))}</div>
+    </div>
+  );
 }
 
 export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowProps) => {
@@ -112,20 +180,32 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowPr
   const redGold = red.reduce((sum, p) => sum + p.goldEarned, 0);
   const totalGold = blueGold + redGold;
   const blueShare = totalGold > 0 ? Math.round((blueGold / totalGold) * 100) : 50;
+  const blueDamage = blue.reduce((sum, p) => sum + p.totalDamageDealtToChampions, 0);
+  const redDamage = red.reduce((sum, p) => sum + p.totalDamageDealtToChampions, 0);
+  const totalDamage = blueDamage + redDamage;
+  const blueDamageShare = totalDamage > 0 ? Math.round((blueDamage / totalDamage) * 100) : 50;
   const winnerGold = match.winningTeamId === 100 ? blueGold : redGold;
   const loserGold = match.winningTeamId === 100 ? redGold : blueGold;
+  const leadSide =
+    blueDamage === redDamage ? "Neither side" : blueDamage > redDamage ? "Blue" : "Red";
+  const leadGold = Math.abs(winnerGold - loserGold);
+  const leadDamage = Math.abs(blueDamage - redDamage);
   const mvp = useMemo(
     () =>
-      [...match.participants]
+      match.participants
         .filter((p) => p.teamId === match.winningTeamId)
-        .sort((a, b) => mvpScore(b) - mvpScore(a) || b.kills - a.kills)[0],
+        .toSorted((a, b) => mvpScore(b) - mvpScore(a) || b.kills - a.kills)[0],
     [match]
   );
   const sortedByGold = useMemo(
-    () => [...match.participants].sort((a, b) => b.goldEarned - a.goldEarned),
+    () => match.participants.toSorted((a, b) => b.goldEarned - a.goldEarned),
     [match]
   );
   const maxGold = sortedByGold[0]?.goldEarned || 1;
+  const maxDamage = Math.max(
+    ...match.participants.map((p) => p.totalDamageDealtToChampions),
+    1
+  );
   const tabIndex = TABS.findIndex((t) => t.key === tab);
   const rowIcon = champIcons[match.championId];
 
@@ -162,7 +242,7 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowPr
             {match.win ? "Victory" : "Defeat"}
           </span>
           <span className="block text-xs tabular-nums text-stone-500 dark:text-stone-400">
-            {match.kills}/{match.deaths}/{match.assists} · {shortDate(match.gameEndTimestamp)}
+            {match.kills}/{match.deaths}/{match.assists} · {match.cs} CS · {shortDate(match.gameEndTimestamp)}
           </span>
         </span>
         <IoChevronDown
@@ -177,8 +257,13 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowPr
         <div className="match-panel-inner">
           <div className="border-t border-black/5 px-5 py-3 dark:border-white/5">
             <div className="flex items-center gap-3">
-              <span className="w-16 shrink-0 text-xs font-semibold tabular-nums text-sky-700 dark:text-sky-400">
-                Blue {goldK(blueGold)}
+              <span className="w-16 shrink-0">
+                <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
+                  Gold
+                </span>
+                <span className="block text-xs font-semibold tabular-nums text-sky-700 dark:text-sky-400">
+                  Blue {kFormat(blueGold)}
+                </span>
               </span>
               <div
                 className="flex h-2 flex-1 overflow-hidden rounded-full bg-black/10 dark:bg-white/10"
@@ -191,13 +276,37 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowPr
                 <div className="h-full flex-1 rounded-r-full bg-red-500/80" />
               </div>
               <span className="w-16 shrink-0 text-right text-xs font-semibold tabular-nums text-red-600 dark:text-red-400">
-                {goldK(redGold)} Red
+                {kFormat(redGold)} Red
+              </span>
+            </div>
+            <div className="mt-2.5 flex items-center gap-3">
+              <span className="w-16 shrink-0">
+                <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
+                  Damage
+                </span>
+                <span className="block text-xs font-semibold tabular-nums text-sky-700 dark:text-sky-400">
+                  Blue {kFormat(blueDamage)}
+                </span>
+              </span>
+              <div
+                className="flex h-2 flex-1 overflow-hidden rounded-full bg-black/10 dark:bg-white/10"
+                aria-hidden
+              >
+                <div
+                  className="h-full rounded-l-full bg-sky-500/80"
+                  style={{ width: `${blueDamageShare}%` }}
+                />
+                <div className="h-full flex-1 rounded-r-full bg-red-500/80" />
+              </div>
+              <span className="w-16 shrink-0 text-right text-xs font-semibold tabular-nums text-red-600 dark:text-red-400">
+                {kFormat(redDamage)} Red
               </span>
             </div>
             <p className="mt-2 text-center text-[11px] text-stone-500 dark:text-stone-400">
-              {match.winningTeamId === 100 ? "Blue" : "Red"} side leads by{" "}
-              <span className="font-semibold tabular-nums">{goldK(winnerGold - loserGold)}</span>{" "}
-              gold
+              {match.winningTeamId === 100 ? "Blue" : "Red"} side wins ·{" "}
+              <span className="font-semibold tabular-nums">{leadSide}</span> leads by{" "}
+              <span className="font-semibold tabular-nums">{kFormat(leadGold)}</span> gold ·{" "}
+              <span className="font-semibold tabular-nums">{kFormat(leadDamage)}</span> damage
             </p>
           </div>
 
@@ -233,79 +342,123 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowPr
 
           {tab === "players" && (
             <div className="grid gap-4 px-5 pb-4 pt-3 sm:grid-cols-2">
-              {[
-                { team: blue, title: "Blue Side", gold: blueGold, won: match.winningTeamId === 100 },
-                { team: red, title: "Red Side", gold: redGold, won: match.winningTeamId === 200 },
-              ].map(({ team, title, gold, won }) => (
-                <div key={title}>
-                  <p className="flex items-baseline justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
-                    <span>
-                      {title}
-                      {won && (
-                        <span className="ml-1.5 text-teal-600 dark:text-teal-400">Win</span>
-                      )}
-                    </span>
-                    <span className="tabular-nums">{goldK(gold)} gold</span>
-                  </p>
-                  <div className="mt-1.5 space-y-0.5">
-                    {team.map((p) => (
-                      <ParticipantRow
-                        key={p.puuid}
-                        p={p}
-                        champIcon={champIcons[p.championId]}
-                        isMvp={mvp?.puuid === p.puuid}
-                        isSelf={p.puuid === selfPuuid}
-                      >
-                        <span className="shrink-0 text-right">
-                          <span className="block text-xs font-semibold tabular-nums text-stone-700 dark:text-stone-200">
-                            {p.kills}/{p.deaths}/{p.assists}
-                          </span>
-                          <span className="block text-[11px] tabular-nums text-stone-400 dark:text-stone-500">
-                            {p.cs} CS · {goldK(p.goldEarned)}
-                          </span>
-                        </span>
-                      </ParticipantRow>
-                    ))}
-                  </div>
-                </div>
-              ))}
+              <TeamColumn
+                title="Blue Side"
+                team={blue}
+                gold={blueGold}
+                won={match.winningTeamId === 100}
+              >
+                {(p) => (
+                  <ParticipantRow
+                    key={p.puuid}
+                    p={p}
+                    champIcon={champIcons[p.championId]}
+                    isMvp={mvp?.puuid === p.puuid}
+                    isSelf={p.puuid === selfPuuid}
+                    subLine={<DamageBar p={p} maxDamage={maxDamage} />}
+                  >
+                    <PlayerStats p={p} />
+                  </ParticipantRow>
+                )}
+              </TeamColumn>
+              <TeamColumn title="Red Side" team={red} gold={redGold} won={match.winningTeamId === 200}>
+                {(p) => (
+                  <ParticipantRow
+                    key={p.puuid}
+                    p={p}
+                    champIcon={champIcons[p.championId]}
+                    isMvp={mvp?.puuid === p.puuid}
+                    isSelf={p.puuid === selfPuuid}
+                    subLine={<DamageBar p={p} maxDamage={maxDamage} />}
+                  >
+                    <PlayerStats p={p} />
+                  </ParticipantRow>
+                )}
+              </TeamColumn>
             </div>
           )}
 
           {tab === "items" && (
-            <div className="space-y-1.5 px-5 pb-4 pt-3">
-              {[...blue, ...red].map((p) => (
-                <div key={p.puuid} className="flex items-center gap-2.5">
-                  <ChampIcon src={champIcons[p.championId]} alt={p.championName} className="h-7 w-7" />
-                  <span className="w-24 shrink-0 truncate text-xs font-semibold text-stone-700 dark:text-stone-200">
-                    {playerLabel(p)}
-                  </span>
-                  <span className="flex flex-1 gap-1" aria-label={`${playerLabel(p)} items`}>
-                    {p.items.map((itemId, i) =>
-                      itemId > 0 ? (
-                        <Image
-                          key={`${itemId}-${i}`}
-                          src={itemUrl(ddVersion, itemId)}
-                          alt=""
-                          width={64}
-                          height={64}
-                          className="h-7 w-7 rounded-md border border-black/10 dark:border-white/10"
-                        />
-                      ) : (
-                        // oxlint-disable-next-line react/no-array-index-key
-                        <span
-                          key={`empty-${i}`}
-                          aria-hidden
-                          className="h-7 w-7 rounded-md border border-dashed border-black/10 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.02]"
-                        />
-                      )
-                    )}
-                  </span>
-                  <span className="w-14 shrink-0 text-right text-xs font-semibold tabular-nums text-stone-500 dark:text-stone-400">
-                    {p.kills}/{p.deaths}/{p.assists}
-                  </span>
-                </div>
-              ))}
+            <div className="grid gap-4 px-5 pb-4 pt-3 sm:grid-cols-2">
+              <TeamColumn
+                title="Blue Side"
+                team={blue}
+                gold={blueGold}
+                won={match.winningTeamId === 100}
+              >
+                {(p) => (
+                  <ParticipantRow
+                    key={p.puuid}
+                    p={p}
+                    champIcon={champIcons[p.championId]}
+                    isMvp={mvp?.puuid === p.puuid}
+                    isSelf={p.puuid === selfPuuid}
+                    subLine={
+                      <span className="flex items-center gap-1" aria-label={`${playerLabel(p)} items`}>
+                        {p.items.map((itemId, i) =>
+                          itemId > 0 ? (
+                            <Image
+                              // oxlint-disable-next-line react/no-array-index-key
+                              key={`${itemId}-${i}`}
+                              src={itemUrl(ddVersion, itemId)}
+                              alt=""
+                              width={64}
+                              height={64}
+                              className="h-6 w-6 rounded-md border border-black/10 dark:border-white/10"
+                            />
+                          ) : (
+                            <span
+                              // oxlint-disable-next-line react/no-array-index-key
+                              key={`empty-${i}`}
+                              aria-hidden
+                              className="h-6 w-6 rounded-md border border-dashed border-black/10 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.02]"
+                            />
+                          )
+                        )}
+                      </span>
+                    }
+                  >
+                    <PlayerStats p={p} />
+                  </ParticipantRow>
+                )}
+              </TeamColumn>
+              <TeamColumn title="Red Side" team={red} gold={redGold} won={match.winningTeamId === 200}>
+                {(p) => (
+                  <ParticipantRow
+                    key={p.puuid}
+                    p={p}
+                    champIcon={champIcons[p.championId]}
+                    isMvp={mvp?.puuid === p.puuid}
+                    isSelf={p.puuid === selfPuuid}
+                    subLine={
+                      <span className="flex items-center gap-1" aria-label={`${playerLabel(p)} items`}>
+                        {p.items.map((itemId, i) =>
+                          itemId > 0 ? (
+                            <Image
+                              // oxlint-disable-next-line react/no-array-index-key
+                              key={`${itemId}-${i}`}
+                              src={itemUrl(ddVersion, itemId)}
+                              alt=""
+                              width={64}
+                              height={64}
+                              className="h-6 w-6 rounded-md border border-black/10 dark:border-white/10"
+                            />
+                          ) : (
+                            <span
+                              // oxlint-disable-next-line react/no-array-index-key
+                              key={`empty-${i}`}
+                              aria-hidden
+                              className="h-6 w-6 rounded-md border border-dashed border-black/10 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.02]"
+                            />
+                          )
+                        )}
+                      </span>
+                    }
+                  >
+                    <PlayerStats p={p} />
+                  </ParticipantRow>
+                )}
+              </TeamColumn>
             </div>
           )}
 
@@ -326,8 +479,8 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowPr
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <span className="w-12 shrink-0 text-right text-xs font-semibold tabular-nums text-stone-500 dark:text-stone-400">
-                      {goldK(p.goldEarned)}
+                    <span className="w-16 shrink-0 text-right text-xs font-semibold tabular-nums text-stone-500 dark:text-stone-400">
+                      {kFormat(p.goldEarned)} · {p.cs} CS
                     </span>
                   </div>
                 );
