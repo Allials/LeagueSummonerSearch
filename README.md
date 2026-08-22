@@ -1,13 +1,53 @@
 # LeagueSummonerSearch
-Project using Riot Games API to find and display profile data such as level, icon, and highest rank.
 
+A Next.js app using the Riot Games API to find and display League of Legends profile data such as level, icon, ranked stats, and champion mastery.
 
-It is my first Project using React, Axios, and data from an API.
+## Features
 
+- Search any North American (NA) League of Legends account by summoner name
+- Ranked Solo/Duo and Ranked Flex stats (tier, rank, LP, wins/losses, win rate bar)
+- Top 6 highest mastery champions with mastery badges, tokens progression, and last-played dates
+- Recent match history (last 10 games: champion, mode, KDA, outcome)
+- Recent searches + example hint + `/` keyboard shortcut to focus search
+- Dark/light mode toggle with system preference detection and sliding thumb
+- Server-side Riot API calls — your API key never leaves the server
+- Marcellus display type + Poppins UI, LoL-inspired palette, reduced-motion support
 
-This site only works with North American League Accounts. Searching up other regions will not give data at the moment. 
+## Getting Started
 
-If you are in the North American server for league then you are able to look at your ranked solo/duo data, ranked flex data, top 6 highest mastery champions, and last time you played the champion. 
+Requirements: Node.js 18+, pnpm
 
+```bash
+pnpm install
+cp .env.example .env.local   # add your Riot API key
+pnpm dev
+```
 
-This Project was fun to learn react, react router, putting get request with an api, and adding a dark/light mode with tailwind. I mostly struggled with using JSON data and figuring out how to use some of the react hooks like setState and useEffect. 
+Open [http://localhost:3000](http://localhost:3000).
+
+Get a Riot API key at https://developer.riotgames.com.
+
+## Scripts
+
+| Command         | Description                |
+| --------------- | -------------------------- |
+| `pnpm dev`      | Start the dev server       |
+| `pnpm build`    | Production build           |
+| `pnpm start`    | Serve the production build |
+| `pnpm lint`     | ESLint                     |
+| `pnpm test`     | Jest tests                 |
+
+## Stack
+
+- Next.js (App Router, server components) — project lives at the repo root
+- React 19
+- TypeScript
+- Tailwind CSS
+- Axios
+- oxlint + Jest
+- pnpm
+
+## Notes
+
+- Only NA accounts are supported at the moment.
+- Static data (champion ids, rank/mastery images) lives in `components/` and `components/imgs/`.

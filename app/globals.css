@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid #c8aa6e;
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl bg-white/70 ring-1 ring-black/5 backdrop-blur-sm dark:bg-white/[0.04] dark:ring-white/10;
+  }
+
+  .btn-press {
+    transition:
+      transform 160ms ease-out,
+      background-color 200ms ease,
+      color 200ms ease,
+      box-shadow 200ms ease,
+      border-color 200ms ease;
+  }
+
+  .btn-press:active {
+    transform: scale(0.97);
+  }
+
+  .section-label {
+    @apply text-xs font-bold uppercase tracking-[0.2em] text-gold-600 dark:text-gold-400;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 450ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-press {
+    transition: background-color 200ms ease;
+  }
+  .btn-press:active {
+    transform: none;
+  }
+  .animate-fade-up {
+    animation-duration: 200ms;
+    animation-timing-function: ease-out;
+  }
+  .animate-pulse {
+    animation: none;
+  }
+}
