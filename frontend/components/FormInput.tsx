@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useSyncExternalStore, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IoSearch } from "react-icons/io5";
 import { DEFAULT_REGION, REGIONS, type RegionKey } from "@/lib/regions";
@@ -33,11 +34,16 @@ export const FormInput = () => {
     const raw = summonerName.trim();
     if (!raw) return;
     const name = raw.includes("#") ? raw : `${raw}#${REGIONS[region].tag}`;
+    touchRecent(name);
+    const qs = region === DEFAULT_REGION ? "" : `?region=${region}`;
+    startTransition(() => router.push(`/player/${encodeURIComponent(name)}${qs}`));
+  };
+
+  // Reorder + persist without navigating (used when a prefetched chip is opened).
+  const touchRecent = (name: string) => {
     const next = [name, ...recent.filter((n) => n !== name)].slice(0, RECENT_LIMIT);
     setRecent(next);
     localStorage.setItem(RECENT_KEY, JSON.stringify(next));
-    const qs = region === DEFAULT_REGION ? "" : `?region=${region}`;
-    startTransition(() => router.push(`/player/${encodeURIComponent(name)}${qs}`));
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -52,7 +58,7 @@ export const FormInput = () => {
       <form onSubmit={handleSubmit} role="search">
         <div className="flex flex-col gap-3 sm:flex-row">
           <RegionSelect value={region} onChange={setRegion} size="md" />
-          <div className="relative flex-1">
+          <div className="attention-pulse relative flex-1 rounded-xl">
             <IoSearch className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-stone-400 dark:text-stone-500" />
             <input
               ref={inputRef}
@@ -87,24 +93,25 @@ export const FormInput = () => {
       <div className="mt-4 flex min-h-6 flex-wrap items-center justify-center gap-2">
         {isMounted ? (
           recent.length === 0 ? (
-            <button
-              type="button"
-              onClick={() => inputRef.current?.focus()}
+            <Link
+              href="/player/Doublelift%23NA1"
+              prefetch
               className="btn-press rounded-full bg-black/5 px-3 py-1 text-xs text-stone-500 hover:bg-gold-400/20 hover:text-stone-700 dark:bg-white/5 dark:text-stone-400 dark:hover:bg-gold-400/10 dark:hover:text-gold-300"
             >
               Try: Doublelift
-            </button>
+            </Link>
           ) : (
             <>
               {recent.map((name) => (
-                <button
+                <Link
                   key={name}
-                  type="button"
-                  onClick={() => submit(name)}
+                  href={`/player/${encodeURIComponent(name)}`}
+                  prefetch
+                  onClick={() => touchRecent(name)}
                   className="btn-press rounded-full bg-black/5 px-3 py-1 text-xs text-stone-500 hover:bg-gold-400/20 hover:text-stone-700 dark:bg-white/5 dark:text-stone-400 dark:hover:bg-gold-400/10 dark:hover:text-gold-300"
                 >
                   {name}
-                </button>
+                </Link>
               ))}
               <button
                 type="button"

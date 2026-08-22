@@ -10,7 +10,6 @@ import {
   DEFAULT_REGION,
   REGIONS,
   platformsForCluster,
-  regionForTag,
   resolveRiotId,
 } from "./regions";
 
@@ -51,19 +50,47 @@ export class RiotApiError extends Error {
 }
 
 const profileCache = new Map<string, { data: SummonerProfile; expiresAt: number }>();
+// Full lookups can cost a dozen+ requests; remember misses briefly so retries
+// don't burn through dev-key rate limits.
+const NEGATIVE_TTL_MS = 60_000;
+const negativeCache = new Map<string, number>();
+// puuid -> platform is a stable fact once discovered; remember it so repeat
+// views skip the platform probing entirely.
+const platformCache = new Map<string, string>();
 const matchCache = new Map<string, { data: MatchSummary[]; expiresAt: number }>();
 
-async function riotGet<T>(url: string): Promise<T> {
+async function riotGet<T>(url: string, attempt = 0): Promise<T> {
   let res: Response;
   try {
     res = await fetch(url, { headers: authHeaders, cache: "no-store" });
   } catch {
     throw new RiotApiError(0, "Could not reach the Riot API.");
   }
+  // One bounded retry on rate-limit bursts; honor Retry-After when small.
+  if (res.status === 429 && attempt === 0) {
+    const retryAfterSec = Number(res.headers.get("retry-after"));
+    const waitMs =
+      Number.isFinite(retryAfterSec) && retryAfterSec > 0
+        ? Math.min(retryAfterSec * 1000, 2000)
+        : 750;
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+    return riotGet<T>(url, attempt + 1);
+  }
   if (!res.ok) {
     throw new RiotApiError(res.status, `Riot API responded ${res.status}`);
   }
   return (await res.json()) as T;
+}
+
+const CACHE_LIMIT = 300;
+
+function cacheSet<T>(map: Map<string, T>, key: string, value: T): void {
+  if (map.has(key)) map.delete(key);
+  else if (map.size >= CACHE_LIMIT) {
+    const oldest = map.keys().next().value;
+    if (oldest !== undefined) map.delete(oldest);
+  }
+  map.set(key, value);
 }
 
 function regionalBase(regional: string): string {
@@ -74,66 +101,29 @@ function platformBase(platform: string): string {
   return `https://${platform}.api.riotgames.com`;
 }
 
-function clustersToTry(tagLine: string, region?: string): string[] {
-  const known = regionForTag(tagLine);
-  if (known) return [REGIONS[known].regional];
-  const primary =
-    region && region in REGIONS ? REGIONS[region as keyof typeof REGIONS].regional : REGIONS[DEFAULT_REGION].regional;
-  return [primary, ...CLUSTERS.filter((cluster) => cluster !== primary)];
+function fetchAccount(regional: string, gameName: string, tagLine: string): Promise<RiotAccount> {
+  return riotGet<RiotAccount>(
+    `${regionalBase(regional)}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`
+  );
 }
 
-async function resolveAccount(
-  gameName: string,
-  tagLine: string,
-  region?: string
-): Promise<{ account: RiotAccount; regional: string }> {
-  let lastStatus = 404;
-  for (const cluster of clustersToTry(tagLine, region)) {
-    try {
-      // Sequential by design: stop at the first cluster holding the account.
-      // eslint-disable-next-line no-await-in-loop
-      const account = await riotGet<RiotAccount>(
-        `${regionalBase(cluster)}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`
-      );
-      return { account, regional: cluster };
-    } catch (err) {
-      const status = err instanceof RiotApiError ? err.status : undefined;
-      if (status === 404) {
-        lastStatus = 404;
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw new RiotApiError(lastStatus, `No account found for ${gameName}#${tagLine}`);
-}
-
+// Riot's account-v1 resolves Riot IDs globally, but the LoL profile lives on
+// exactly one platform — which the account response does not reveal. Probe
+// platforms in preference order until summoner-v4 answers.
 async function locateSummoner(
-  regional: string,
   puuid: string,
-  region?: string
+  candidates: string[]
 ): Promise<{ platform: string; summoner: Summoner }> {
-  const regionConfig = region && region in REGIONS ? REGIONS[region as keyof typeof REGIONS] : undefined;
-  const preferred =
-    regionConfig && regionConfig.regional === regional ? regionConfig.platform : undefined;
-
-  const candidates = [
-    ...(preferred ? [preferred] : []),
-    ...platformsForCluster(regional).filter((platform) => platform !== preferred),
-  ];
-
   for (const platform of candidates) {
     try {
-      // Sequential by design: stop at the first platform holding the summoner.
+      // Sequential by design: stop at the first platform holding the profile.
       // eslint-disable-next-line no-await-in-loop
       const summoner = await riotGet<Summoner>(
         `${platformBase(platform)}/lol/summoner/v4/summoners/by-puuid/${puuid}`
       );
       return { platform, summoner };
     } catch (err) {
-      const status = err instanceof RiotApiError ? err.status : undefined;
-      if (status === 404) continue;
-      throw err;
+      if (!(err instanceof RiotApiError && err.status === 404)) throw err;
     }
   }
   throw new RiotApiError(404, "Summoner profile not found on any server.");
@@ -147,7 +137,11 @@ export async function getSummonerProfile(
     throw new RiotApiError(0, "RIOT_API_KEY is not configured on the server.");
   }
 
-  const { gameName, tagLine } = resolveRiotId(riotId, region);
+  // The typed region tag (or selected region) picks the preferred platform;
+  // the account lookup stays strictly scoped to it. Since account-v1 mirrors
+  // Riot IDs globally, a hit there doesn't prove the profile lives on that
+  // platform — locateSummoner probes outward from the preference.
+  const { gameName, tagLine, platform, regional } = resolveRiotId(riotId, region);
   const cacheKey = `${gameName}#${tagLine}`;
 
   const cached = profileCache.get(cacheKey);
@@ -155,16 +149,53 @@ export async function getSummonerProfile(
     return cached.data;
   }
 
+  const missedAt = negativeCache.get(cacheKey);
+  if (missedAt && Date.now() - missedAt < NEGATIVE_TTL_MS) {
+    throw new RiotApiError(404, `No account found for ${gameName}#${tagLine}`);
+  }
+
   try {
-    const { account, regional } = await resolveAccount(gameName, tagLine, region);
-    const { platform, summoner } = await locateSummoner(regional, account.puuid, region);
+    let account: RiotAccount | undefined;
+    for (const cluster of [regional, ...CLUSTERS.filter((c) => c !== regional)]) {
+      try {
+        // Sequential by design: stop at the first mirror answering.
+        // eslint-disable-next-line no-await-in-loop
+        account = await fetchAccount(cluster, gameName, tagLine);
+        break;
+      } catch (err) {
+        if (!(err instanceof RiotApiError && err.status === 404)) throw err;
+      }
+    }
+    if (!account) {
+      throw new RiotApiError(404, `No account found for ${gameName}#${tagLine}`);
+    }
+
+    let summonerPlatform = platformCache.get(account.puuid);
+    let summoner: Summoner;
+    if (summonerPlatform) {
+      summoner = await riotGet<Summoner>(
+        `${platformBase(summonerPlatform)}/lol/summoner/v4/summoners/by-puuid/${account.puuid}`
+      );
+    } else {
+      const sameCluster = platformsForCluster(regional).filter((p) => p !== platform);
+      const elsewhere = (Object.keys(REGIONS) as (keyof typeof REGIONS)[])
+        .map((key) => REGIONS[key].platform)
+        .filter((p) => p !== platform && !sameCluster.includes(p));
+
+      ({ platform: summonerPlatform, summoner } = await locateSummoner(account.puuid, [
+        platform,
+        ...sameCluster,
+        ...elsewhere,
+      ]));
+      cacheSet(platformCache, account.puuid, summonerPlatform);
+    }
 
     const [mastery, league] = await Promise.all([
       riotGet<ChampionMastery[]>(
-        `${platformBase(platform)}/lol/champion-mastery/v4/champion-masteries/by-puuid/${account.puuid}/top?count=6`
+        `${platformBase(summonerPlatform)}/lol/champion-mastery/v4/champion-masteries/by-puuid/${account.puuid}/top?count=6`
       ),
       riotGet<LeagueEntry[]>(
-        `${platformBase(platform)}/lol/league/v4/entries/by-puuid/${account.puuid}`
+        `${platformBase(summonerPlatform)}/lol/league/v4/entries/by-puuid/${account.puuid}`
       ),
     ]);
 
@@ -172,12 +203,22 @@ export async function getSummonerProfile(
       summoner,
       mastery,
       league,
-      meta: { platform, regional },
+      meta: {
+        platform: summonerPlatform,
+        regional:
+          Object.values(REGIONS).find((r) => r.platform === summonerPlatform)?.regional ??
+          regional,
+        gameName: account.gameName,
+        tagLine: account.tagLine,
+      },
     };
 
-    profileCache.set(cacheKey, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+    cacheSet(profileCache, cacheKey, { data, expiresAt: Date.now() + CACHE_TTL_MS });
     return data;
   } catch (err) {
+    if (err instanceof RiotApiError && err.status === 404) {
+      cacheSet(negativeCache, cacheKey, Date.now());
+    }
     throw err instanceof RiotApiError
       ? err
       : new RiotApiError(0, err instanceof Error ? err.message : "Unknown Riot API error");
@@ -277,6 +318,6 @@ export async function getMatchHistory(
     };
   });
 
-  matchCache.set(cacheKey, { data: result, expiresAt: Date.now() + MATCH_CACHE_TTL_MS });
+  cacheSet(matchCache, cacheKey, { data: result, expiresAt: Date.now() + MATCH_CACHE_TTL_MS });
   return result;
 }

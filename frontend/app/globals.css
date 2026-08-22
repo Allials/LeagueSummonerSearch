@@ -31,6 +31,35 @@
   .section-label {
     @apply text-xs font-bold uppercase tracking-[0.2em] text-gold-600 dark:text-gold-400;
   }
+
+  .brand-link .brand-logo {
+    transition:
+      transform 180ms cubic-bezier(0.23, 1, 0.32, 1),
+      filter 200ms ease;
+  }
+
+  .brand-link .brand-name {
+    transition: color 200ms ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .brand-link:hover .brand-logo {
+      transform: scale(1.04);
+      filter: drop-shadow(0 0 6px rgb(200 170 110 / 0.4));
+    }
+    .brand-link:hover .brand-name {
+      color: #a98b4f;
+    }
+    .dark .brand-link:hover .brand-name {
+      color: #f8f1e0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .brand-link .brand-logo {
+      transition: filter 200ms ease;
+    }
+  }
 }
 
 @keyframes fade-up {
@@ -46,6 +75,35 @@
 
 .animate-fade-up {
   animation: fade-up 450ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@keyframes attention-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(200 170 110 / 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgb(200 170 110 / 0);
+  }
+}
+
+.attention-pulse {
+  animation: attention-pulse 700ms cubic-bezier(0.23, 1, 0.32, 1) 2;
+  animation-delay: 1100ms;
+}
+
+@keyframes bar-settle {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.bar-settle {
+  transform-origin: left;
+  animation: bar-settle 700ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation-delay: 900ms;
 }
 
 .match-panel {
@@ -138,6 +196,12 @@
     animation: panel-fade 150ms ease;
   }
   .animate-pulse {
+    animation: none;
+  }
+  .attention-pulse {
+    animation: none;
+  }
+  .bar-settle {
     animation: none;
   }
   .match-panel,

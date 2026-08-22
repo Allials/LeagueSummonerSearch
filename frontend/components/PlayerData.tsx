@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import Image from "next/image";
+import { IoAlertCircle } from "react-icons/io5";
 import { rankImages } from "./Images";
 import { championMeta, championIconUrl, profileIconUrl, getVersion } from "@/lib/ddragon";
-import { REGIONS } from "@/lib/regions";
+import { DEFAULT_REGION, REGIONS, regionKeyForPlatform } from "@/lib/regions";
 import { shortDate } from "@/lib/format";
 import { MatchRow } from "./MatchRow";
 import type { Summoner, ChampionMastery, LeagueEntry, MatchSummary } from "@/lib/types";
@@ -10,8 +12,8 @@ interface PlayerDataProps {
   summoner: Summoner;
   mastery: ChampionMastery[];
   league: LeagueEntry[];
-  matches: MatchSummary[];
-  meta?: { platform: string; regional: string };
+  matchesPromise: Promise<MatchSummary[] | null>;
+  meta?: { platform: string; regional: string; gameName?: string; tagLine?: string };
 }
 
 const masteryPoints = (points: number): string => {
@@ -78,18 +80,54 @@ function RankedCard({ title, entry }: { title: string; entry: LeagueEntry | null
   );
 }
 
-export default async function PlayerData({ summoner, mastery, league, matches, meta }: PlayerDataProps) {
-  const solo = league.find((q) => q.queueType === "RANKED_SOLO_5x5") ?? null;
-  const flex = league.find((q) => q.queueType === "RANKED_FLEX_SR") ?? null;
-  const iconUrl = await profileIconUrl(summoner.profileIconId);
-  const ddVersion = await getVersion();
-
-  const champions = await Promise.all(
-    mastery.map(async (champ) => {
-      const championMetaData = await championMeta(champ.championId);
-      return { champ, meta: championMetaData, iconUrl: await championIconUrl(championMetaData.key) };
-    })
+function MatchesSkeleton() {
+  return (
+    <div className="card mt-4 divide-y divide-black/5 dark:divide-white/5" aria-hidden>
+      {Array.from({ length: 5 }).map((_, i) => (
+        // oxlint-disable-next-line react/no-array-index-key
+        <div key={i} className="flex items-center gap-4 px-4 py-4">
+          <span className="h-2.5 w-2.5 rounded-full bg-black/10 dark:bg-white/10" />
+          <span className="h-10 w-10 animate-pulse rounded-lg bg-black/10 dark:bg-white/10" />
+          <span className="min-w-0 flex-1 space-y-1.5">
+            <span className="block h-3 w-24 rounded bg-black/10 dark:bg-white/10" />
+            <span className="block h-2.5 w-32 rounded bg-black/5 dark:bg-white/5" />
+          </span>
+          <span className="h-3 w-20 rounded bg-black/5 dark:bg-white/5" />
+        </div>
+      ))}
+    </div>
   );
+}
+
+async function MatchesList({
+  matchesPromise,
+  selfPuuid,
+  regionKey,
+}: {
+  matchesPromise: Promise<MatchSummary[] | null>;
+  selfPuuid: string;
+  regionKey: ReturnType<typeof regionKeyForPlatform>;
+}) {
+  const [matches, ddVersion] = await Promise.all([matchesPromise, getVersion()]);
+
+  if (matches === null) {
+    return (
+      <div className="mt-4 flex items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
+        <IoAlertCircle className="shrink-0 text-base text-gold-500 dark:text-gold-400" />
+        <span>
+          Couldn&apos;t load match history — Riot may be rate-limited. Try again in a minute.
+        </span>
+      </div>
+    );
+  }
+
+  if (matches.length === 0) {
+    return (
+      <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
+        No recent matches for this account yet.
+      </p>
+    );
+  }
 
   const participantIds = [
     ...new Set(matches.flatMap((match) => match.participants.map((p) => p.championId))),
@@ -102,8 +140,39 @@ export default async function PlayerData({ summoner, mastery, league, matches, m
     })
   );
 
+  return (
+    <div className="card animate-fade-up mt-4 overflow-hidden">
+      {matches.map((match) => (
+        <MatchRow
+          key={match.id}
+          match={match}
+          ddVersion={ddVersion}
+          champIcons={champIcons}
+          selfPuuid={selfPuuid}
+          regionKey={regionKey ?? DEFAULT_REGION}
+        />
+      ))}
+    </div>
+  );
+}
+
+export default async function PlayerData({ summoner, mastery, league, matchesPromise, meta }: PlayerDataProps) {
+  const solo = league.find((q) => q.queueType === "RANKED_SOLO_5x5") ?? null;
+  const flex = league.find((q) => q.queueType === "RANKED_FLEX_SR") ?? null;
+  const iconUrl = await profileIconUrl(summoner.profileIconId);
+
+  const champions = await Promise.all(
+    mastery.map(async (champ) => {
+      const championMetaData = await championMeta(champ.championId);
+      return { champ, meta: championMetaData, iconUrl: await championIconUrl(championMetaData.key) };
+    })
+  );
+
   const regionLabel =
     Object.values(REGIONS).find((r) => r.platform === meta?.platform)?.label ?? "North America";
+  const regionKey = regionKeyForPlatform(meta?.platform ?? "") ?? DEFAULT_REGION;
+  const displayName = meta?.gameName || summoner.name || "Unknown Summoner";
+  const displayTag = meta?.tagLine;
 
   return (
     <div>
@@ -114,8 +183,8 @@ export default async function PlayerData({ summoner, mastery, league, matches, m
             alt="Profile Icon"
             width={120}
             height={120}
-            className="h-24 w-24 rounded-2xl ring-2 ring-gold-400/40 md:h-32 md:w-32"
             priority
+            className="h-24 w-24 rounded-2xl ring-2 ring-gold-400/40 md:h-32 md:w-32"
           />
           <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gold-400 px-3 py-0.5 text-xs font-bold text-night-950 shadow-md dark:shadow-black/30">
             Level {summoner.summonerLevel}
@@ -123,7 +192,12 @@ export default async function PlayerData({ summoner, mastery, league, matches, m
         </div>
         <div className="min-w-0">
           <h1 className="truncate font-display text-4xl leading-none text-stone-900 dark:text-gold-300 md:text-6xl">
-            {summoner.name}
+            {displayName}
+            {displayTag && (
+              <span className="ml-3 align-middle text-base font-semibold tracking-wide text-gold-600 dark:text-gold-400 md:text-xl">
+                #{displayTag}
+              </span>
+            )}
           </h1>
           <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
             {regionLabel} · Updated {shortDate(summoner.revisionDate)}
@@ -184,23 +258,13 @@ export default async function PlayerData({ summoner, mastery, league, matches, m
 
       <section className="mt-12">
         <h2 className="section-label">Recent Matches</h2>
-        {matches.length > 0 ? (
-          <div className="card animate-fade-up mt-4 overflow-hidden">
-            {matches.map((match) => (
-              <MatchRow
-                key={match.id}
-                match={match}
-                ddVersion={ddVersion}
-                champIcons={champIcons}
-                selfPuuid={summoner.puuid}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
-            No recent matches for this account.
-          </p>
-        )}
+        <Suspense fallback={<MatchesSkeleton />}>
+          <MatchesList
+            matchesPromise={matchesPromise}
+            selfPuuid={summoner.puuid}
+            regionKey={regionKey}
+          />
+        </Suspense>
       </section>
     </div>
   );

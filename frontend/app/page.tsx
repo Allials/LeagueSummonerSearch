@@ -33,15 +33,11 @@ const matchRow = [
 export default function Home() {
   return (
     <div className="flex flex-col items-center px-4 pt-8 md:pt-12">
-      <span className="animate-fade-up rounded-full bg-gold-400/10 px-4 py-1 text-xs font-bold uppercase tracking-[0.2em] text-gold-600 ring-1 ring-gold-400/30 dark:text-gold-400 dark:ring-gold-400/20">
-        Every region
-      </span>
-
       <Image
         src={logo}
         alt="Teemo Logo"
         priority
-        className="animate-fade-up mt-6 h-20 w-20 rounded-2xl shadow-lg shadow-black/20 ring-1 ring-gold-400/40 dark:shadow-black/40 md:h-24 md:w-24"
+        className="animate-fade-up mt-2 h-20 w-20 rounded-2xl shadow-lg shadow-black/20 ring-1 ring-gold-400/40 dark:shadow-black/40 md:h-24 md:w-24"
         style={{ animationDelay: "60ms" }}
       />
 
@@ -49,19 +45,20 @@ export default function Home() {
         className="animate-fade-up mt-5 font-display text-6xl leading-none text-stone-900 dark:text-gold-300 md:text-8xl"
         style={{ animationDelay: "120ms" }}
       >
-        Summoner Stats
+        Kit
+        <span className="text-gold-500 dark:text-gold-400">.GG</span>
       </h1>
 
       <p
-        className="animate-fade-up mt-4 max-w-md text-center text-sm leading-relaxed text-stone-500 dark:text-stone-400 md:text-base"
+        className="animate-fade-up mt-5 max-w-lg text-center text-sm leading-relaxed text-stone-500 dark:text-stone-400 md:text-base"
         style={{ animationDelay: "180ms" }}
       >
-        Search any League of Legends account across every region for ranked
-        stats, champion mastery, and match history.
+        Search any League of Legends account — ranked stats,
+        champion mastery, and match history.
       </p>
 
       <div
-        className="animate-fade-up relative z-50 flex w-full justify-center"
+        className="animate-fade-up relative z-20 flex w-full justify-center"
         style={{ animationDelay: "240ms" }}
       >
         <FormInput />
@@ -121,7 +118,7 @@ export default function Home() {
               <div className="mt-2.5 max-w-[8rem]">
                 <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
                   <div
-                    className="h-full rounded-l-full bg-gold-400"
+                    className="bar-settle h-full rounded-l-full bg-gold-400"
                     style={{ width: "54%" }}
                   />
                   <div className="h-full flex-1 rounded-r-full bg-stone-400/25 dark:bg-stone-500/25" />

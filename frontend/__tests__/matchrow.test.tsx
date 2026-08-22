@@ -66,7 +66,7 @@ describe("MatchRow", () => {
   it("shows a damage bar under each player on the Players tab", async () => {
     const user = userEvent.setup();
     const { container } = render(
-      <MatchRow match={match} ddVersion="15.4.1" champIcons={{}} selfPuuid="b0" />
+      <MatchRow match={match} ddVersion="15.4.1" champIcons={{}} selfPuuid="b0" regionKey="NA1" />
     );
     await user.click(screen.getByRole("button", { name: /Victory/ }));
     expect(container.querySelectorAll('[aria-hidden="true"] .bg-sky-500\\/80, [aria-hidden="true"] .bg-red-500\\/80').length).toBeGreaterThanOrEqual(9);
@@ -76,7 +76,7 @@ describe("MatchRow", () => {
   it("renders items under each player on the Items tab", async () => {
     const user = userEvent.setup();
     const { container } = render(
-      <MatchRow match={match} ddVersion="15.4.1" champIcons={{}} selfPuuid="b0" />
+      <MatchRow match={match} ddVersion="15.4.1" champIcons={{}} selfPuuid="b0" regionKey="NA1" />
     );
     await user.click(screen.getByRole("button", { name: /Victory/ }));
     await user.click(screen.getByRole("tab", { name: "Items" }));

@@ -1,17 +1,18 @@
-# LeagueSummonerSearch
+# Kit
 
-A Next.js app using the Riot Games API to find and display League of Legends profile data such as level, icon, ranked stats, and champion mastery.
+A League of Legends stats app — search any account for ranked stats, champion mastery, and match history. Built with the Riot Games API, styled for the Rift.
 
 ## Features
 
-- Search any North American (NA) League of Legends account by summoner name
+- Search any League of Legends account by summoner name or Riot ID (`Name#TAG`)
 - Ranked Solo/Duo and Ranked Flex stats (tier, rank, LP, wins/losses, win rate bar)
-- Top 6 highest mastery champions with mastery badges, tokens progression, and last-played dates
-- Recent match history (last 10 games: champion, mode, KDA, outcome)
+- Top 6 highest mastery champions with mastery levels and season-milestone progress
+- Recent match history with expandable details: gold/damage diff, full 5v5 rosters, per-player damage bars, item builds, and MVP
+- Click any player in a match to open their profile
+- Region support (NA, EUW, KR, and more) with Riot ID tags (`Name#TAG`)
 - Recent searches + example hint + `/` keyboard shortcut to focus search
 - Dark/light mode toggle with system preference detection and sliding thumb
 - Server-side Riot API calls — your API key never leaves the server
-- Marcellus display type + Poppins UI, LoL-inspired palette, reduced-motion support
 
 ## Getting Started
 
@@ -34,8 +35,8 @@ Get a Riot API key at https://developer.riotgames.com.
 | `pnpm dev`      | Start the dev server       |
 | `pnpm build`    | Production build           |
 | `pnpm start`    | Serve the production build |
-| `pnpm lint`     | ESLint                     |
-| `pnpm test`     | Jest tests                 |
+| `pnpm lint`     | oxlint                  |
+| `pnpm test`     | Jest tests              |
 
 ## Stack
 
@@ -43,11 +44,10 @@ Get a Riot API key at https://developer.riotgames.com.
 - React 19
 - TypeScript
 - Tailwind CSS
-- Axios
+- Native fetch (Riot API)
 - oxlint + Jest
 - pnpm
 
 ## Notes
 
-- Only NA accounts are supported at the moment.
 - Static data (champion ids, rank/mastery images) lives in `components/` and `components/imgs/`.

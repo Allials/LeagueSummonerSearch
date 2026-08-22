@@ -15,12 +15,10 @@ export function PlayerNotFound({ query }: { query: string }) {
         <li>Double-check the spelling of the game name.</li>
         <li>
           Custom taglines are unique — include them exactly, like{" "}
-          <span className="font-semibold">Name#TAG</span>.
+          <span className="font-semibold">Name#TAG</span>. They belong to one
+          specific server, so try a different region too.
         </li>
-        <li>
-          A tagline doesn&apos;t have to match its server (e.g. an NA account can use a
-          custom tag) — but it must be typed exactly.
-        </li>
+        <li>Some Riot IDs exist but have never created a League of Legends profile.</li>
       </ul>
       <Link
         href="/"

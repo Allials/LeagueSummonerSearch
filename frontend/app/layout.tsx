@@ -18,7 +18,7 @@ const anton = Anton({
 });
 
 export const metadata: Metadata = {
-  title: "Summoner Stats",
+  title: "Kit",
   description:
     "Search League of Legends accounts for ranked stats, champion mastery, and more.",
 };

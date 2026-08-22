@@ -10,9 +10,15 @@ export interface ChampionMeta {
 
 let versionPromise: Promise<string> | null = null;
 let championsPromise: Promise<Map<number, ChampionMeta> | null> | null = null;
+let versionFetchedAt = 0;
+// Data Dragon patches ship every ~2 weeks; refresh so long-running servers
+// don't serve icons from a dead patch URL.
+const VERSION_TTL_MS = 12 * 60 * 60 * 1000;
 
 export function getVersion(): Promise<string> {
-  if (!versionPromise) {
+  if (!versionPromise || Date.now() - versionFetchedAt > VERSION_TTL_MS) {
+    versionFetchedAt = Date.now();
+    championsPromise = null;
     versionPromise = fetch(`${DD_BASE}/api/versions.json`)
       .then((res) => (res.ok ? (res.json() as Promise<string[]>) : []))
       .then((versions) => versions[0] ?? FALLBACK_VERSION)

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import PlayerData from "@/components/PlayerData";
 import { PlayerNotFound } from "@/components/PlayerNotFound";
 import { getSummonerProfile, getMatchHistory, RiotApiError, friendlyRiotMessage } from "@/lib/riot";
-import type { MatchSummary } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +20,7 @@ function decodeParam(value: string): string {
 
 export async function generateMetadata({ params }: PlayerPageProps): Promise<Metadata> {
   const { playerName } = await params;
-  return { title: `${decodeParam(playerName)} - Summoner Stats` };
+  return { title: `${decodeParam(playerName)} - Kit` };
 }
 
 export default async function PlayerPage({ params, searchParams }: PlayerPageProps) {
@@ -42,12 +41,15 @@ export default async function PlayerPage({ params, searchParams }: PlayerPagePro
     throw new Error(friendlyRiotMessage(0), { cause: error });
   }
 
-  let matches: MatchSummary[] = [];
-  try {
-    matches = await getMatchHistory(profile.summoner.puuid, profile.meta?.regional);
-  } catch (error) {
-    console.error(`Match history failed for ${playerName}:`, error);
-  }
+  // Streamed: the profile renders immediately; match history (1 + 10 Riot
+  // calls) fills in via Suspense without blocking first paint.
+  // null = the fetch failed (rate limit, network), [] = genuinely no matches.
+  const matchesPromise = getMatchHistory(profile.summoner.puuid, profile.meta?.regional).catch(
+    (error) => {
+      console.error(`Match history failed for ${playerName}:`, error);
+      return null;
+    }
+  );
 
-  return <PlayerData {...profile} matches={matches} />;
+  return <PlayerData {...profile} matchesPromise={matchesPromise} />;
 }

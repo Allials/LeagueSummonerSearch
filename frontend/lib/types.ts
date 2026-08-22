@@ -56,6 +56,8 @@ export interface SummonerProfile {
   meta?: {
     platform: string;
     regional: string;
+    gameName?: string;
+    tagLine?: string;
   };
 }
 

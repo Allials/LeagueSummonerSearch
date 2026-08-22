@@ -8,14 +8,15 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-[60] border-b border-black/5 bg-[#F5F2EC]/70 backdrop-blur-md dark:border-white/10 dark:bg-night-950/70">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-3 md:px-6">
-        <Link href="/" className="btn-press flex shrink-0 items-center gap-2.5">
+        <Link href="/" className="brand-link btn-press flex shrink-0 items-center gap-2.5">
           <Image
             src={logo}
             alt="Teemo Logo"
-            className="h-9 w-9 rounded-lg ring-1 ring-gold-400/30"
+            className="brand-logo h-9 w-9 rounded-lg ring-1 ring-gold-400/30"
           />
-          <span className="text-sm font-extrabold tracking-tight text-stone-800 dark:text-gold-300 md:text-base">
-            Summoner Stats
+          <span className="brand-name text-sm font-extrabold tracking-tight text-stone-800 dark:text-gold-300 md:text-base">
+            Kit
+            <span className="text-gold-500 dark:text-gold-400">.GG</span>
           </span>
         </Link>
         <div className="flex items-center gap-3">

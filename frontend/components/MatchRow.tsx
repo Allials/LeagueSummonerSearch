@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { IoChevronDown, IoStar } from "react-icons/io5";
 import type { MatchSummary, MatchParticipant } from "@/lib/types";
+import { DEFAULT_REGION, type RegionKey } from "@/lib/regions";
 import { shortDate, formatDuration, gameModeName, kFormat } from "@/lib/format";
 
 const DD_BASE = "https://ddragon.leagueoflegends.com";
@@ -14,6 +15,7 @@ interface MatchRowProps {
   ddVersion: string;
   champIcons: Record<number, string>;
   selfPuuid: string;
+  regionKey: RegionKey;
 }
 
 type TabKey = "players" | "items" | "gold";
@@ -31,13 +33,25 @@ const mvpScore = (p: MatchParticipant) => p.kills * 3 + p.assists - p.deaths;
 const itemUrl = (ddVersion: string, itemId: number) =>
   `${DD_BASE}/cdn/${ddVersion}/img/item/${itemId}.png`;
 
-const playerHref = (p: MatchParticipant): string | null =>
-  p.riotIdGameName
-    ? `/player/${encodeURIComponent(`${p.riotIdGameName}#${p.riotIdTagLine}`)}`
-    : null;
+const playerHref = (p: MatchParticipant, regionKey: RegionKey): string | null => {
+  if (!p.riotIdGameName) return null;
+  // Riot match data often omits taglines; scope those links to the profile's
+  // own region so cross-region browsing still resolves.
+  const id = p.riotIdTagLine
+    ? `${p.riotIdGameName}#${p.riotIdTagLine}`
+    : p.riotIdGameName;
+  const qs =
+    !p.riotIdTagLine && regionKey !== DEFAULT_REGION ? `?region=${regionKey}` : "";
+  return `/player/${encodeURIComponent(id)}${qs}`;
+};
 
 const playerLabel = (p: MatchParticipant): string =>
-  p.riotIdGameName ? `${p.riotIdGameName}#${p.riotIdTagLine}` : p.championName;
+  p.riotIdGameName || p.championName;
+
+const playerTitle = (p: MatchParticipant): string | undefined =>
+  p.riotIdGameName && p.riotIdTagLine
+    ? `${p.riotIdGameName}#${p.riotIdTagLine}`
+    : undefined;
 
 function ChampIcon({ src, alt, className }: { src: string; alt: string; className: string }) {
   if (!src) return <span className={`shrink-0 rounded-md bg-black/10 dark:bg-white/10 ${className}`} aria-hidden />;
@@ -51,6 +65,7 @@ function ParticipantRow({
   champIcon,
   isMvp,
   isSelf,
+  regionKey,
   subLine,
   children,
 }: {
@@ -58,16 +73,18 @@ function ParticipantRow({
   champIcon: string;
   isMvp: boolean;
   isSelf: boolean;
+  regionKey: RegionKey;
   subLine?: React.ReactNode;
   children?: React.ReactNode;
 }) {
-  const href = playerHref(p);
+  const href = playerHref(p, regionKey);
+  const title = playerTitle(p);
   const body = (
     <>
       <ChampIcon src={champIcon} alt={p.championName} className="h-8 w-8" />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex items-center gap-1.5">
-          <span className="truncate text-xs font-bold text-stone-900 dark:text-gold-300">
+          <span title={title} className="truncate text-xs font-bold text-stone-900 dark:text-gold-300">
             {playerLabel(p)}
           </span>
           {isSelf && (
@@ -161,7 +178,7 @@ function TeamColumn({
   );
 }
 
-export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowProps) => {
+export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }: MatchRowProps) => {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<TabKey>("players");
 
@@ -355,6 +372,7 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowPr
                     champIcon={champIcons[p.championId]}
                     isMvp={mvp?.puuid === p.puuid}
                     isSelf={p.puuid === selfPuuid}
+                    regionKey={regionKey}
                     subLine={<DamageBar p={p} maxDamage={maxDamage} />}
                   >
                     <PlayerStats p={p} />
@@ -369,6 +387,7 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowPr
                     champIcon={champIcons[p.championId]}
                     isMvp={mvp?.puuid === p.puuid}
                     isSelf={p.puuid === selfPuuid}
+                    regionKey={regionKey}
                     subLine={<DamageBar p={p} maxDamage={maxDamage} />}
                   >
                     <PlayerStats p={p} />
@@ -393,6 +412,7 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowPr
                     champIcon={champIcons[p.championId]}
                     isMvp={mvp?.puuid === p.puuid}
                     isSelf={p.puuid === selfPuuid}
+                    regionKey={regionKey}
                     subLine={
                       <span className="flex items-center gap-1" aria-label={`${playerLabel(p)} items`}>
                         {p.items.map((itemId, i) =>
@@ -430,6 +450,7 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowPr
                     champIcon={champIcons[p.championId]}
                     isMvp={mvp?.puuid === p.puuid}
                     isSelf={p.puuid === selfPuuid}
+                    regionKey={regionKey}
                     subLine={
                       <span className="flex items-center gap-1" aria-label={`${playerLabel(p)} items`}>
                         {p.items.map((itemId, i) =>
@@ -479,7 +500,7 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid }: MatchRowPr
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <span className="w-16 shrink-0 text-right text-xs font-semibold tabular-nums text-stone-500 dark:text-stone-400">
+                    <span className="w-24 shrink-0 whitespace-nowrap text-right text-xs font-semibold tabular-nums text-stone-500 dark:text-stone-400">
                       {kFormat(p.goldEarned)} · {p.cs} CS
                     </span>
                   </div>
