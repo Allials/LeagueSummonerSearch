@@ -48,6 +48,31 @@
   animation: fade-up 450ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
+.match-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 300ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 200ms ease-out,
+    visibility 0s linear 300ms;
+}
+
+.match-panel[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    grid-template-rows 300ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 200ms ease-out;
+}
+
+.match-panel-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
 @keyframes panel-in {
   from {
     opacity: 0;
@@ -114,5 +139,9 @@
   }
   .animate-pulse {
     animation: none;
+  }
+  .match-panel,
+  .match-panel[data-open="true"] {
+    transition: opacity 200ms ease-out;
   }
 }

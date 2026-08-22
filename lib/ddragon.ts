@@ -11,7 +11,7 @@ export interface ChampionMeta {
 let versionPromise: Promise<string> | null = null;
 let championsPromise: Promise<Map<number, ChampionMeta> | null> | null = null;
 
-function getVersion(): Promise<string> {
+export function getVersion(): Promise<string> {
   if (!versionPromise) {
     versionPromise = fetch(`${DD_BASE}/api/versions.json`)
       .then((res) => (res.ok ? (res.json() as Promise<string[]>) : []))
@@ -59,4 +59,9 @@ export async function profileIconUrl(iconId: number): Promise<string> {
 export async function championIconUrl(key: string): Promise<string> {
   const version = await getVersion();
   return `${DD_BASE}/cdn/${version}/img/champion/${key}.png`;
+}
+
+export async function itemIconUrl(itemId: number): Promise<string> {
+  const version = await getVersion();
+  return `${DD_BASE}/cdn/${version}/img/item/${itemId}.png`;
 }

@@ -22,28 +22,32 @@ export type RegionKey = keyof typeof REGIONS;
 
 export const DEFAULT_REGION: RegionKey = "NA1";
 
-export interface ResolvedRiotId {
-  gameName: string;
-  tagLine: string;
-  platform: string;
-  regional: string;
+export const CLUSTERS: string[] = Array.from(
+  new Set(Object.values(REGIONS).map((region) => region.regional))
+);
+
+export function regionForTag(tag: string): RegionKey | undefined {
+  const key = tag.trim().toUpperCase() as RegionKey;
+  return key in REGIONS ? key : undefined;
 }
 
-export function resolveRiotId(riotId: string, region?: string): ResolvedRiotId {
+export function platformsForCluster(regional: string): string[] {
+  return (Object.keys(REGIONS) as RegionKey[])
+    .filter((key) => REGIONS[key].regional === regional)
+    .map((key) => REGIONS[key].platform);
+}
+
+export function resolveRiotId(
+  riotId: string,
+  region?: string
+): { gameName: string; tagLine: string } {
   const [rawGameName, rawTagLine] = riotId.split("#");
   const gameName = rawGameName.trim();
   const typedTag = rawTagLine?.trim().toUpperCase();
-
-  const typedConfig =
-    typedTag && typedTag in REGIONS ? REGIONS[typedTag as RegionKey] : undefined;
   const regionConfig =
-    region && region in REGIONS ? REGIONS[region as RegionKey] : undefined;
-  const config = typedConfig ?? regionConfig ?? REGIONS[DEFAULT_REGION];
-
+    region && region in REGIONS ? REGIONS[region as RegionKey] : REGIONS[DEFAULT_REGION];
   return {
     gameName,
-    tagLine: typedTag ?? config.tag,
-    platform: config.platform,
-    regional: config.regional,
+    tagLine: typedTag || regionConfig.tag,
   };
 }

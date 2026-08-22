@@ -1,6 +1,9 @@
 import Image from "next/image";
 import { rankImages, masteryImages } from "./Images";
-import { championMeta, championIconUrl, profileIconUrl } from "@/lib/ddragon";
+import { championMeta, championIconUrl, profileIconUrl, getVersion } from "@/lib/ddragon";
+import { REGIONS } from "@/lib/regions";
+import { shortDate } from "@/lib/format";
+import { MatchRow } from "./MatchRow";
 import type { Summoner, ChampionMastery, LeagueEntry, MatchSummary } from "@/lib/types";
 
 interface PlayerDataProps {
@@ -8,38 +11,13 @@ interface PlayerDataProps {
   mastery: ChampionMastery[];
   league: LeagueEntry[];
   matches: MatchSummary[];
+  meta?: { platform: string; regional: string };
 }
 
 const masteryPoints = (points: number): string => {
   if (!Number.isFinite(points) || points <= 0) return "No Data";
   if (points >= 1_000_000) return `${(points / 1_000_000).toFixed(1)}M`;
   return points.toLocaleString("en-US");
-};
-
-const shortDate = (unixDate: number): string =>
-  new Date(unixDate).toLocaleString("en-us", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "2-digit",
-  });
-
-const formatDuration = (sec: number): string => {
-  const minutes = Math.floor(sec / 60);
-  const seconds = String(sec % 60).padStart(2, "0");
-  return `${minutes}m ${seconds}s`;
-};
-
-const gameModeName = (mode: string): string => {
-  switch (mode) {
-    case "CLASSIC":
-      return "Summoner's Rift";
-    case "ARAM":
-      return "ARAM";
-    case "URF":
-      return "URF";
-    default:
-      return mode || "Match";
-  }
 };
 
 function MasteryBadge({ level }: { level: number }) {
@@ -49,7 +27,7 @@ function MasteryBadge({ level }: { level: number }) {
     <Image
       src={src}
       alt={`Champion mastery level ${level}`}
-      className="absolute -bottom-2 -left-2 h-9 w-9 drop-shadow-md"
+      className="absolute -bottom-2 -left-2 z-10 h-9 w-9 drop-shadow-md"
     />
   );
 }
@@ -104,24 +82,32 @@ function RankedCard({ title, entry }: { title: string; entry: LeagueEntry | null
   );
 }
 
-export default async function PlayerData({ summoner, mastery, league, matches }: PlayerDataProps) {
+export default async function PlayerData({ summoner, mastery, league, matches, meta }: PlayerDataProps) {
   const solo = league.find((q) => q.queueType === "RANKED_SOLO_5x5") ?? null;
   const flex = league.find((q) => q.queueType === "RANKED_FLEX_SR") ?? null;
   const iconUrl = await profileIconUrl(summoner.profileIconId);
+  const ddVersion = await getVersion();
 
   const champions = await Promise.all(
     mastery.map(async (champ) => {
-      const meta = await championMeta(champ.championId);
-      return { champ, meta, iconUrl: await championIconUrl(meta.key) };
+      const championMetaData = await championMeta(champ.championId);
+      return { champ, meta: championMetaData, iconUrl: await championIconUrl(championMetaData.key) };
     })
   );
 
-  const matchChampions = await Promise.all(
-    matches.map(async (match) => {
-      const meta = await championMeta(match.championId);
-      return { match, iconUrl: await championIconUrl(meta.key) };
+  const participantIds = [
+    ...new Set(matches.flatMap((match) => match.participants.map((p) => p.championId))),
+  ];
+  const champIcons: Record<number, string> = {};
+  await Promise.all(
+    participantIds.map(async (id) => {
+      const championMetaData = await championMeta(id);
+      champIcons[id] = await championIconUrl(championMetaData.key);
     })
   );
+
+  const regionLabel =
+    Object.values(REGIONS).find((r) => r.platform === meta?.platform)?.label ?? "North America";
 
   return (
     <div>
@@ -144,7 +130,7 @@ export default async function PlayerData({ summoner, mastery, league, matches }:
             {summoner.name}
           </h1>
           <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
-            North America · Updated {shortDate(summoner.revisionDate)}
+            {regionLabel} · Updated {shortDate(summoner.revisionDate)}
           </p>
         </div>
       </section>
@@ -161,7 +147,7 @@ export default async function PlayerData({ summoner, mastery, league, matches }:
         <h2 className="section-label">Top Mastery</h2>
         {champions.length > 0 ? (
           <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {champions.map(({ champ, meta, iconUrl: icon }, i) => (
+            {champions.map(({ champ, meta: champMeta, iconUrl: icon }, i) => (
               <div
                 key={champ.championId}
                 className="card animate-fade-up p-4 text-center"
@@ -171,14 +157,14 @@ export default async function PlayerData({ summoner, mastery, league, matches }:
                   <MasteryBadge level={champ.championLevel} />
                   <Image
                     src={icon}
-                    alt={meta.name}
+                    alt={champMeta.name}
                     width={128}
                     height={128}
                     className="h-20 w-20 rounded-xl md:h-24 md:w-24"
                   />
                 </div>
                 <h3 className="mt-3 truncate text-sm font-bold text-stone-900 dark:text-gold-300">
-                  {meta.name}
+                  {champMeta.name}
                 </h3>
                 <p className="mt-0.5 text-xs font-semibold text-stone-500 dark:text-stone-400">
                   {masteryPoints(champ.championPoints)}
@@ -202,46 +188,16 @@ export default async function PlayerData({ summoner, mastery, league, matches }:
 
       <section className="mt-12">
         <h2 className="section-label">Recent Matches</h2>
-        {matchChampions.length > 0 ? (
-          <div className="card animate-fade-up mt-4 divide-y divide-black/5 dark:divide-white/5">
-            {matchChampions.map(({ match, iconUrl: icon }) => (
-              <div key={match.id} className="flex items-center gap-3 px-4 py-3 md:gap-4">
-                <span
-                  aria-hidden
-                  className={`h-2.5 w-2.5 shrink-0 rounded-full ${
-                    match.win ? "bg-teal-500" : "bg-red-500"
-                  }`}
-                />
-                <Image
-                  src={icon}
-                  alt={match.championName}
-                  width={128}
-                  height={128}
-                  className="h-10 w-10 shrink-0 rounded-lg"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-stone-900 dark:text-gold-300">
-                    {match.championName}
-                  </p>
-                  <p className="text-xs text-stone-500 dark:text-stone-400">
-                    {gameModeName(match.gameMode)} · {formatDuration(match.gameDurationSec)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p
-                    className={`text-sm font-bold ${
-                      match.win
-                        ? "text-teal-600 dark:text-teal-400"
-                        : "text-red-600 dark:text-red-400"
-                    }`}
-                  >
-                    {match.win ? "Victory" : "Defeat"}
-                  </p>
-                  <p className="text-xs text-stone-500 dark:text-stone-400">
-                    {match.kills}/{match.deaths}/{match.assists} · {shortDate(match.gameEndTimestamp)}
-                  </p>
-                </div>
-              </div>
+        {matches.length > 0 ? (
+          <div className="card animate-fade-up mt-4 overflow-hidden">
+            {matches.map((match) => (
+              <MatchRow
+                key={match.id}
+                match={match}
+                ddVersion={ddVersion}
+                champIcons={champIcons}
+                selfPuuid={summoner.puuid}
+              />
             ))}
           </div>
         ) : (

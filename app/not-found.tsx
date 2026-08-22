@@ -7,8 +7,7 @@ export default function NotFound() {
         Summoner not found
       </h1>
       <p className="mt-3 max-w-sm text-sm leading-relaxed text-stone-500 dark:text-stone-400">
-        That summoner name doesn&apos;t exist on the North American server, or
-        the account was renamed.
+        That page doesn&apos;t exist. Head back home and search for a summoner.
       </p>
       <Link
         href="/"

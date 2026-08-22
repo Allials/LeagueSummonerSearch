@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import PlayerData from "@/components/PlayerData";
+import { PlayerNotFound } from "@/components/PlayerNotFound";
 import { getSummonerProfile, getMatchHistory, RiotApiError, friendlyRiotMessage } from "@/lib/riot";
 import type { MatchSummary } from "@/lib/types";
 
@@ -25,7 +25,7 @@ export default async function PlayerPage({ params, searchParams }: PlayerPagePro
     profile = await getSummonerProfile(playerName, region);
   } catch (error) {
     if (error instanceof RiotApiError && error.status === 404) {
-      notFound();
+      return <PlayerNotFound query={playerName} />;
     }
     if (error instanceof RiotApiError) {
       throw new Error(friendlyRiotMessage(error.status), { cause: error });
@@ -35,7 +35,7 @@ export default async function PlayerPage({ params, searchParams }: PlayerPagePro
 
   let matches: MatchSummary[] = [];
   try {
-    matches = await getMatchHistory(profile.summoner.puuid, region);
+    matches = await getMatchHistory(profile.summoner.puuid, profile.meta?.regional);
   } catch (error) {
     console.error(`Match history failed for ${playerName}:`, error);
   }

@@ -118,10 +118,14 @@ export const FormInput = () => {
               </button>
             </>
           )
-        ) : (
-          <span aria-hidden className="h-6" />
-        )}
+        ) : null}
       </div>
+
+      <p className="mt-4 text-center text-[11px] leading-relaxed text-stone-400 dark:text-stone-500">
+        Tip: paste the full Riot ID like <span className="font-semibold">Name#TAG</span> —
+        custom tags work too. Use the region menu to pick your server, or leave it and
+        we&apos;ll search everywhere.
+      </p>
     </div>
   );
 };

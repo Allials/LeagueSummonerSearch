@@ -6,7 +6,7 @@ import { HeaderSearch } from "./HeaderSearch";
 
 const Header = () => {
   return (
-    <header className="sticky top-0 z-40 border-b border-black/5 bg-[#F5F2EC]/70 backdrop-blur-md dark:border-white/10 dark:bg-night-950/70">
+    <header className="sticky top-0 z-[60] border-b border-black/5 bg-[#F5F2EC]/70 backdrop-blur-md dark:border-white/10 dark:bg-night-950/70">
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-3 md:px-6">
         <Link href="/" className="btn-press flex shrink-0 items-center gap-2.5">
           <Image

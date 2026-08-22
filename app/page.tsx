@@ -34,7 +34,7 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center px-4 pt-8 md:pt-12">
       <span className="animate-fade-up rounded-full bg-gold-400/10 px-4 py-1 text-xs font-bold uppercase tracking-[0.2em] text-gold-600 ring-1 ring-gold-400/30 dark:text-gold-400 dark:ring-gold-400/20">
-        North America
+        Every region
       </span>
 
       <Image
@@ -56,8 +56,8 @@ export default function Home() {
         className="animate-fade-up mt-4 max-w-md text-center text-sm leading-relaxed text-stone-500 dark:text-stone-400 md:text-base"
         style={{ animationDelay: "180ms" }}
       >
-        Search any North American League of Legends account for ranked stats,
-        champion mastery, and match history.
+        Search any League of Legends account across every region for ranked
+        stats, champion mastery, and match history.
       </p>
 
       <div

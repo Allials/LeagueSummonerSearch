@@ -46,6 +46,26 @@ export interface SummonerProfile {
   summoner: Summoner;
   mastery: ChampionMastery[];
   league: LeagueEntry[];
+  meta?: {
+    platform: string;
+    regional: string;
+  };
+}
+
+export interface MatchParticipant {
+  teamId: number;
+  puuid: string;
+  riotIdGameName: string;
+  riotIdTagLine: string;
+  championId: number;
+  championName: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+  cs: number;
+  goldEarned: number;
+  items: number[];
+  win: boolean;
 }
 
 export interface MatchSummary {
@@ -59,4 +79,6 @@ export interface MatchSummary {
   assists: number;
   gameEndTimestamp: number;
   gameDurationSec: number;
+  winningTeamId: number;
+  participants: MatchParticipant[];
 }
