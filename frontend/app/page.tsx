@@ -39,28 +39,27 @@ export default function Home() {
         alt="Teemo Logo"
         priority
         className="animate-fade-up mt-2 h-32 w-32 md:h-36 md:w-36"
-        style={{ animationDelay: "60ms" }}
       />
 
       <h1
         className="animate-fade-up mt-3 font-display text-6xl leading-none tracking-[-0.02em] text-stone-900 dark:text-gold-300 md:text-8xl"
-        style={{ animationDelay: "120ms" }}
+        style={{ animationDelay: "40ms" }}
       >
         Kit
         <span className="text-gold-500 dark:text-gold-400">.GG</span>
       </h1>
 
       <p
-        className="animate-fade-up mt-5 max-w-lg text-center text-sm leading-relaxed text-stone-500 dark:text-stone-400 md:text-base"
-        style={{ animationDelay: "180ms" }}
+        className="animate-fade-up mt-5 max-w-lg text-center text-sm leading-relaxed text-stone-600 dark:text-stone-400 md:text-base"
+        style={{ animationDelay: "80ms" }}
       >
-        Search any League of Legends account — ranked stats,
+        Search any League of Legends account for ranked stats,
         champion mastery, and match history.
       </p>
 
       <div
         className="animate-fade-up relative z-20 flex w-full justify-center"
-        style={{ animationDelay: "240ms" }}
+        style={{ animationDelay: "120ms" }}
       >
         <FormInput />
       </div>
@@ -70,7 +69,7 @@ export default function Home() {
       <section className="mt-14 w-full max-w-3xl">
         <div className="flex items-baseline justify-between gap-4">
           <h2 className="section-label">What you get</h2>
-          <p className="text-[11px] text-stone-400 dark:text-stone-500">
+          <p className="text-xs font-medium text-stone-500 dark:text-stone-400">
             Sample profile
           </p>
         </div>
@@ -104,7 +103,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 divide-y divide-black/5 px-5 dark:divide-white/5 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
             <div className="py-4 sm:pr-5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-stone-500 dark:text-stone-400">
                 Solo / Duo
               </p>
               <p className="mt-2 font-display text-xl leading-none text-stone-900 dark:text-gold-300">
@@ -128,7 +127,7 @@ export default function Home() {
             </div>
 
             <div className="py-4 sm:pl-5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-stone-500 dark:text-stone-400">
                 Top Mastery
               </p>
               <div className="mt-2.5 flex items-center gap-3">
@@ -172,7 +171,7 @@ export default function Home() {
                   <p className="truncate text-xs font-semibold text-stone-700 dark:text-stone-300">
                     {match.name}
                   </p>
-                  <p className="text-[11px] text-stone-400 dark:text-stone-500">
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400">
                     {match.meta}
                   </p>
                 </div>
@@ -193,8 +192,8 @@ export default function Home() {
           </div>
         </Reveal>
 
-        <p className="mt-3 text-center text-xs text-stone-400 dark:text-stone-500">
-          Your account looks exactly like this — search your name above.
+        <p className="mt-3 text-center text-xs text-stone-500 dark:text-stone-400">
+          Search your summoner name above to view your profile.
         </p>
       </section>
     </div>

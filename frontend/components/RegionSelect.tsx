@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { IoCheckmark, IoChevronDown } from "react-icons/io5";
 import { REGIONS, type RegionKey } from "@/lib/regions";
 
@@ -12,21 +12,30 @@ interface RegionSelectProps {
 
 export const RegionSelect = ({ value, onChange, size = "md" }: RegionSelectProps) => {
   const [open, setOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const listId = useId();
   const isMd = size === "md";
 
+  const closeMenu = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setOpen(false);
+      setIsClosing(false);
+      triggerRef.current?.focus();
+    }, 140);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!rootRef.current?.contains(e.target as Node)) closeMenu();
     };
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
+        closeMenu();
       }
     };
     document.addEventListener("pointerdown", onPointerDown);
@@ -35,7 +44,7 @@ export const RegionSelect = ({ value, onChange, size = "md" }: RegionSelectProps
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [open, closeMenu]);
 
   const focusOption = (dir: 1 | -1) => {
     const options = Array.from(
@@ -47,6 +56,7 @@ export const RegionSelect = ({ value, onChange, size = "md" }: RegionSelectProps
   };
 
   const openMenu = () => {
+    setIsClosing(false);
     setOpen(true);
     requestAnimationFrame(() => {
       const options = Array.from(
@@ -54,11 +64,6 @@ export const RegionSelect = ({ value, onChange, size = "md" }: RegionSelectProps
       );
       (options.find((el) => el.getAttribute("aria-selected") === "true") ?? options[0])?.focus();
     });
-  };
-
-  const closeMenu = () => {
-    setOpen(false);
-    triggerRef.current?.focus();
   };
 
   const select = (region: RegionKey) => {
@@ -116,7 +121,13 @@ export const RegionSelect = ({ value, onChange, size = "md" }: RegionSelectProps
       </button>
 
       {open && (
-        <div className="glass absolute left-0 top-full z-50 mt-2 w-60 origin-top-left animate-panel-in rounded-xl bg-white/95 p-1.5 shadow-xl shadow-black/10 ring-1 ring-black/10 backdrop-blur-md dark:bg-night-900/95 dark:ring-white/10">
+        <div
+          className={`glass absolute left-0 top-full z-50 mt-2 w-60 origin-top-left rounded-xl bg-white/90 p-1.5 shadow-xl shadow-black/10 ring-1 ring-black/10 backdrop-blur-md transition-all duration-150 ease-out dark:bg-night-900/90 dark:ring-white/10 ${
+            isClosing
+              ? "scale-95 -translate-y-1 opacity-0 pointer-events-none"
+              : "animate-panel-in opacity-100"
+          }`}
+        >
           <p className="section-label px-2 pb-1 pt-1.5">Region</p>
           <ul
             ref={listRef}

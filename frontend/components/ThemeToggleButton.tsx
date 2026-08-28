@@ -49,7 +49,13 @@ export const ThemeToggleButton = () => {
                 : "text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300"
             }`}
           >
-            {t === "light" ? <IoSunny /> : <IoMoon />}
+            <span
+              className={`transition-all duration-200 ease-out ${
+                checked ? "scale-105" : "scale-90 opacity-60"
+              }`}
+            >
+              {t === "light" ? <IoSunny /> : <IoMoon />}
+            </span>
           </button>
         );
       })}

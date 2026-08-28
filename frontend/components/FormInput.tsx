@@ -58,7 +58,7 @@ export const FormInput = () => {
       <form onSubmit={handleSubmit} role="search">
         <div className="flex flex-col gap-3 sm:flex-row">
           <RegionSelect value={region} onChange={setRegion} size="md" />
-          <div className="attention-pulse relative flex-1 rounded-xl">
+          <div className="relative flex-1 rounded-xl">
             <IoSearch className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-stone-400 dark:text-stone-500" />
             <input
               ref={inputRef}
@@ -83,7 +83,7 @@ export const FormInput = () => {
           <button
             type="submit"
             disabled={isPending}
-            className="btn-press rounded-xl bg-gold-400 px-8 py-3 text-sm font-bold text-night-950 shadow-lg shadow-gold-400/25 hover:bg-gold-300 disabled:cursor-not-allowed disabled:opacity-60 dark:shadow-gold-400/10 md:text-base"
+            className="btn-press flex min-w-[7.5rem] items-center justify-center rounded-xl bg-gold-400 px-7 py-3 text-sm font-bold text-night-950 shadow-lg shadow-gold-400/25 hover:bg-gold-300 disabled:cursor-not-allowed disabled:opacity-60 dark:shadow-gold-400/10 md:text-base"
           >
             {isPending ? "Searching…" : "Search"}
           </button>
@@ -119,7 +119,7 @@ export const FormInput = () => {
                   setRecent([]);
                   localStorage.removeItem(RECENT_KEY);
                 }}
-                className="btn-press px-2 py-1 text-xs text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300"
+                className="btn-press px-2 py-1 text-xs text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200"
               >
                 Clear
               </button>
@@ -128,10 +128,9 @@ export const FormInput = () => {
         ) : null}
       </div>
 
-      <p className="mt-4 text-center text-[11px] leading-relaxed text-stone-400 dark:text-stone-500">
-        Tip: paste the full Riot ID like <span className="font-semibold">Name#TAG</span> —
-        custom tags work too. Use the region menu to pick your server, or leave it and
-        we&apos;ll search everywhere.
+      <p className="mt-4 text-center text-xs leading-relaxed text-stone-500 dark:text-stone-400">
+        Tip: paste the full Riot ID like <span className="font-semibold text-stone-700 dark:text-gold-300">Name#TAG</span>.
+        Custom tags work too. Pick your server with the region menu, or search across all regions.
       </p>
     </div>
   );
