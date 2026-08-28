@@ -19,8 +19,8 @@ export const FeaturedPlayers = () => {
           <Link
             key={player.name}
             href={`/player/${encodeURIComponent(player.name)}`}
-            className="card btn-press animate-fade-up group flex items-center justify-between px-5 py-4 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5 hover:ring-gold-400/40 dark:hover:shadow-black/20"
-            style={{ animationDelay: `${i * 40}ms` }}
+            className="card btn-press animate-fade-up group flex items-center justify-between px-5 py-4 hover:shadow-lg hover:shadow-black/5 hover:ring-gold-400/40 dark:hover:shadow-black/20"
+            style={{ animationDelay: `${i * 35}ms` }}
           >
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-stone-900 group-hover:text-gold-600 dark:text-gold-300 dark:group-hover:text-gold-400">
@@ -30,7 +30,7 @@ export const FeaturedPlayers = () => {
                 {player.tag} · NA
               </p>
             </div>
-            <IoArrowForward className="shrink-0 text-stone-300 transition-colors duration-200 group-hover:text-gold-400 dark:text-stone-600" />
+            <IoArrowForward className="shrink-0 text-stone-300 transition-all duration-200 ease-out group-hover:translate-x-1 group-hover:text-gold-400 dark:text-stone-600" />
           </Link>
         ))}
       </div>

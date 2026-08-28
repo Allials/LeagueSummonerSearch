@@ -99,12 +99,12 @@ function MatchesSkeleton() {
         // oxlint-disable-next-line react/no-array-index-key
         <div key={i} className="flex items-center gap-4 px-4 py-4">
           <span className="h-2.5 w-2.5 rounded-full bg-black/10 dark:bg-white/10" />
-          <span className="h-10 w-10 animate-pulse rounded-lg bg-black/10 dark:bg-white/10" />
+          <span className="skeleton-shimmer h-10 w-10 rounded-lg" />
           <span className="min-w-0 flex-1 space-y-1.5">
-            <span className="block h-3 w-24 rounded bg-black/10 dark:bg-white/10" />
-            <span className="block h-2.5 w-32 rounded bg-black/5 dark:bg-white/5" />
+            <span className="skeleton-shimmer block h-3 w-24 rounded" />
+            <span className="skeleton-shimmer block h-2.5 w-32 rounded" />
           </span>
-          <span className="h-3 w-20 rounded bg-black/5 dark:bg-white/5" />
+          <span className="skeleton-shimmer h-3 w-20 rounded" />
         </div>
       ))}
     </div>
@@ -124,10 +124,10 @@ async function MatchesList({
 
   if (matches === null) {
     return (
-      <div className="mt-4 flex items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
+      <div className="mt-4 flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
         <IoAlertCircle className="shrink-0 text-base text-gold-500 dark:text-gold-400" />
         <span>
-          Couldn&apos;t load match history — Riot may be rate-limited. Try again in a minute.
+          Couldn&apos;t load match history: Riot servers may be rate-limited. Try again in a moment.
         </span>
       </div>
     );
@@ -139,10 +139,10 @@ async function MatchesList({
         <span className="grid h-11 w-11 place-items-center rounded-xl bg-black/5 text-xl text-stone-400 dark:bg-white/5 dark:text-stone-500">
           <IoGameController />
         </span>
-        <p className="mt-3 text-sm font-semibold text-stone-600 dark:text-stone-300">
+        <p className="mt-3 text-sm font-semibold text-stone-700 dark:text-stone-200">
           No recent matches yet
         </p>
-        <p className="mt-1 max-w-xs text-xs leading-relaxed text-stone-400 dark:text-stone-500">
+        <p className="mt-1 max-w-xs text-xs leading-relaxed text-stone-500 dark:text-stone-400">
           Games this account plays will show up here with full details.
         </p>
       </div>
@@ -229,7 +229,7 @@ export default async function PlayerData({ summoner, mastery, league, matchesPro
         <h2 className="section-label">Ranked</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <RankedCard title="Solo / Duo" entry={solo} delay={0} />
-          <RankedCard title="Flex" entry={flex} delay={60} />
+          <RankedCard title="Flex" entry={flex} delay={40} />
         </div>
       </section>
 
@@ -241,7 +241,7 @@ export default async function PlayerData({ summoner, mastery, league, matchesPro
               <div
                 key={champ.championId}
                 className="card animate-fade-up p-4 text-center"
-                style={{ animationDelay: `${i * 40}ms` }}
+                style={{ animationDelay: `${i * 35}ms` }}
               >
                 <div className="relative mx-auto w-fit">
                   <MasteryBadge level={champ.championLevel} />
@@ -261,7 +261,7 @@ export default async function PlayerData({ summoner, mastery, league, matchesPro
                 <p className="mt-0.5 text-xs font-semibold text-stone-500 dark:text-stone-400">
                   {masteryPoints(champ.championPoints)}
                 </p>
-                <p className="mt-1 text-[11px] text-stone-400 dark:text-stone-500">
+                <p className="mt-1 text-[11px] text-stone-500 dark:text-stone-400">
                   {champ.nextSeasonMilestone
                     ? `${Object.entries(champ.nextSeasonMilestone.requireGradeCounts)
                         .map(([grade, count]) => `${count} ${grade}`)
@@ -276,10 +276,10 @@ export default async function PlayerData({ summoner, mastery, league, matchesPro
             <span className="grid h-11 w-11 place-items-center rounded-xl bg-black/5 text-xl text-stone-400 dark:bg-white/5 dark:text-stone-500">
               <IoStatsChart />
             </span>
-            <p className="mt-3 text-sm font-semibold text-stone-600 dark:text-stone-300">
+            <p className="mt-3 text-sm font-semibold text-stone-700 dark:text-stone-200">
               No mastery data for this account
             </p>
-            <p className="mt-1 max-w-xs text-xs leading-relaxed text-stone-400 dark:text-stone-500">
+            <p className="mt-1 max-w-xs text-xs leading-relaxed text-stone-500 dark:text-stone-400">
               Play a few games and your top champions will appear here.
             </p>
           </div>

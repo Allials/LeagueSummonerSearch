@@ -136,7 +136,7 @@ function DamageBar({ p, maxDamage }: { p: MatchParticipant; maxDamage: number })
           }}
         />
       </span>
-      <span className="shrink-0 text-[10px] font-semibold tabular-nums text-stone-400 dark:text-stone-500">
+      <span className="shrink-0 text-[10px] font-semibold tabular-nums text-stone-500 dark:text-stone-400">
         {kFormat(p.totalDamageDealtToChampions)} dmg
       </span>
     </span>
@@ -146,10 +146,10 @@ function DamageBar({ p, maxDamage }: { p: MatchParticipant; maxDamage: number })
 function PlayerStats({ p }: { p: MatchParticipant }) {
   return (
     <span className="shrink-0 text-right">
-      <span className="block text-xs font-semibold tabular-nums text-stone-700 dark:text-stone-200">
+      <span className="block text-xs font-semibold tabular-nums text-stone-800 dark:text-stone-200">
         {p.kills}/{p.deaths}/{p.assists}
       </span>
-      <span className="block text-[11px] tabular-nums text-stone-400 dark:text-stone-500">
+      <span className="block text-[11px] tabular-nums text-stone-500 dark:text-stone-400">
         {p.cs} CS
       </span>
     </span>
@@ -171,7 +171,7 @@ function TeamColumn({
 }) {
   return (
     <div>
-      <p className="flex items-baseline justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
+      <p className="flex items-baseline justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-stone-500 dark:text-stone-400">
         <span>
           {title}
           {won && <span className="ml-1.5 text-teal-600 dark:text-teal-400">Win</span>}
@@ -263,13 +263,15 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
           >
             {match.win ? "Victory" : "Defeat"}
           </span>
-          <span className="block text-xs tabular-nums text-stone-500 dark:text-stone-400">
-            {match.kills}/{match.deaths}/{match.assists} · {match.cs} CS · {shortDate(match.gameEndTimestamp)}
+          <span className="block text-xs tabular-nums text-stone-600 dark:text-stone-300">
+            <span className="font-semibold">{match.kills}/{match.deaths}/{match.assists}</span>
+            <span className="text-stone-500 dark:text-stone-400"> ({match.cs} CS)</span>
+            <span className="text-stone-400 dark:text-stone-500"> · {shortDate(match.gameEndTimestamp)}</span>
           </span>
         </span>
         <IoChevronDown
           aria-hidden
-          className={`shrink-0 text-stone-400 transition-transform duration-200 ease-out dark:text-stone-500 ${
+          className={`shrink-0 text-stone-500 transition-transform duration-200 ease-out dark:text-stone-400 ${
             open ? "rotate-180" : ""
           }`}
         />
@@ -280,7 +282,7 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
           <div className="border-t border-black/5 px-5 py-3 dark:border-white/5">
             <div className="flex items-center gap-3">
               <span className="w-16 shrink-0">
-                <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
+                <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-stone-500 dark:text-stone-400">
                   Gold
                 </span>
                 <span className="block text-xs font-semibold tabular-nums text-sky-700 dark:text-sky-400">
@@ -303,7 +305,7 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
             </div>
             <div className="mt-2.5 flex items-center gap-3">
               <span className="w-16 shrink-0">
-                <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
+                <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-stone-500 dark:text-stone-400">
                   Damage
                 </span>
                 <span className="block text-xs font-semibold tabular-nums text-sky-700 dark:text-sky-400">
@@ -324,10 +326,10 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
                 {kFormat(redDamage)} Red
               </span>
             </div>
-            <p className="mt-2 text-center text-[11px] text-stone-500 dark:text-stone-400">
-              {match.winningTeamId === 100 ? "Blue" : "Red"} side wins ·{" "}
+            <p className="mt-2 text-center text-[11px] text-stone-600 dark:text-stone-400">
+              {match.winningTeamId === 100 ? "Blue" : "Red"} side victory ·{" "}
               <span className="font-semibold tabular-nums">{leadSide}</span> leads by{" "}
-              <span className="font-semibold tabular-nums">{kFormat(leadGold)}</span> gold ·{" "}
+              <span className="font-semibold tabular-nums">{kFormat(leadGold)}</span> gold and{" "}
               <span className="font-semibold tabular-nums">{kFormat(leadDamage)}</span> damage
             </p>
           </div>
@@ -366,10 +368,11 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
 
           {tab === "players" && (
             <div
+              key="players"
               role="tabpanel"
               id={`panel-${match.id}-players`}
               aria-labelledby={`tab-${match.id}-players`}
-              className="grid gap-4 px-5 pb-4 pt-3 sm:grid-cols-2"
+              className="animate-tab-pane grid gap-4 px-5 pb-4 pt-3 sm:grid-cols-2"
             >
               <TeamColumn
                 title="Blue Side"
@@ -411,10 +414,11 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
 
           {tab === "items" && (
             <div
+              key="items"
               role="tabpanel"
               id={`panel-${match.id}-items`}
               aria-labelledby={`tab-${match.id}-items`}
-              className="grid gap-4 px-5 pb-4 pt-3 sm:grid-cols-2"
+              className="animate-tab-pane grid gap-4 px-5 pb-4 pt-3 sm:grid-cols-2"
             >
               <TeamColumn
                 title="Blue Side"
@@ -506,10 +510,11 @@ export const MatchRow = ({ match, ddVersion, champIcons, selfPuuid, regionKey }:
 
           {tab === "gold" && (
             <div
+              key="gold"
               role="tabpanel"
-              id={`panel--gold`}
-              aria-labelledby={`tab--gold`}
-              className="space-y-1.5 px-5 pb-4 pt-3">
+              id={`panel-${match.id}-gold`}
+              aria-labelledby={`tab-${match.id}-gold`}
+              className="animate-tab-pane space-y-1.5 px-5 pb-4 pt-3">
               {sortedByGold.map((p) => {
                 const pct = Math.max(4, Math.round((p.goldEarned / maxGold) * 100));
                 const teamColor = p.teamId === 100 ? "bg-sky-500/80" : "bg-red-500/80";
